@@ -3,9 +3,7 @@ package it.polimi.ds.tracker;
 import it.polimi.ds.network.Address;
 import it.polimi.ds.network.Message;
 import it.polimi.ds.network.MessageType;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -18,10 +16,19 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 public class AppTest {
     public static final int PORT = App.TRACKER_PORT;
-    /**
-     * THOSE ARE NOT UNIT TEST, TO USE THEM YOU NEED TO RUN THE TRACKER FIRST
-     */
+    private static Thread tracker;
     private ClientTest client;
+
+    @BeforeAll
+    public static void startTracker() {
+        tracker = new Thread(() -> App.main(null));
+        tracker.start();
+    }
+
+    @AfterAll
+    public static void interruptTracker() {
+        tracker.interrupt();
+    }
 
     @BeforeEach
     public void setup() throws IOException {
