@@ -15,7 +15,7 @@ public class Client {
 
     private final Address serverAddress;
     private static boolean done = false;
-    private static final Logger logger = Logger.getLogger("SafeStreetsServer");
+    private static final Logger logger = Logger.getLogger("Client");
 
     public static void main(String[] args) {
         Client client = new Client(args[0], args[1]);
@@ -24,7 +24,7 @@ public class Client {
     }
 
     public Client(String serverIP, String serverPort) {
-        this.serverAddress = new Address(serverIP, Integer.getInteger(serverPort));
+        this.serverAddress = new Address(serverIP, Integer.parseInt(serverPort));
     }
 
     public void start() {
@@ -62,7 +62,7 @@ public class Client {
                         replicaSocket = TCPClient.connect(replicaAddress);
                         replicaSocket.out().writeObject(new Message(MessageType.WRITE_REPLICA, splittedString[1], splittedString[2]));
                         replicaSocket.close();
-                        System.out.println("Value correctly registered.");
+                        logger.log(Level.INFO,"Value correctly registered.");
                         break;
                     // Exiting the client, inputString = exit
                     case "exit":
@@ -70,7 +70,7 @@ public class Client {
                         serverSocket.out().writeObject(new Message(MessageType.REMOVE_CLIENT, replicaAddress));
                         serverSocket.close();
                         setDone();
-                        System.out.println("Exiting client.");
+                        logger.log(Level.INFO,"Exiting client.");
                         return;
                     // Every other expression is ignored
                     default:
