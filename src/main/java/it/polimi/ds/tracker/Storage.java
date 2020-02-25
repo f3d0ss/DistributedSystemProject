@@ -2,33 +2,36 @@ package it.polimi.ds.tracker;
 
 import it.polimi.ds.network.Address;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 public class Storage {
-    private Map<Address, Integer> replicas;
+    private Map<String, Integer> replicas;
 
     public Storage() {
         this.replicas = new HashMap<>();
     }
 
     protected void addReplica(Address address) {
-        replicas.put(address, 0);
+        replicas.put(address.toString(), 0);
     }
 
     protected void removeReplica(Address address) {
-        replicas.remove(address);
+        replicas.remove(address.toString());
     }
 
-    protected Set<Address> getReplicas() {
-        return replicas.keySet();
+    protected ArrayList<Address> getReplicas() {
+        ArrayList<Address> addresses = new ArrayList<>();
+        replicas.keySet().forEach(s -> addresses.add(Address.fromString(s)));
+        return addresses;
     }
 
     // return the address of the replica
     protected Address addClient() {
-        Map.Entry<Address, Integer> min = null;
-        for (Map.Entry<Address, Integer> entry : replicas.entrySet()) {
+        Map.Entry<String, Integer> min = null;
+        for (Map.Entry<String, Integer> entry : replicas.entrySet()) {
             if (min == null || min.getValue() > entry.getValue()) {
                 min = entry;
             }
@@ -36,10 +39,10 @@ public class Storage {
         if (min == null)
             return null;
         replicas.replace(min.getKey(), min.getValue() + 1);
-        return min.getKey();
+        return Address.fromString(min.getKey());
     }
 
     protected void removeClient(Address from) {
-        replicas.computeIfPresent(from, (address, integer) -> replicas.put(address, replicas.get(address) - 1));
+        replicas.computeIfPresent(from.toString(), (address, integer) -> replicas.put(address, replicas.get(address) - 1));
     }
 }

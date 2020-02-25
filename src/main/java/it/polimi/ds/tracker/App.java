@@ -9,7 +9,7 @@ import java.net.Socket;
 
 
 public class App {
-    private static final int TRACKER_PORT = 777; // will be taken from environment
+    public static final int TRACKER_PORT = 2222; // will be taken from environment
     private ServerSocket serverSocket;
     private Storage storage = new Storage();
     public static void main(String[] args) {
@@ -20,8 +20,17 @@ public class App {
     public void start(int port) {
         try {
             serverSocket = new ServerSocket(port);
-            while (true)
+            while (true) {
                 new ClientHandler(serverSocket.accept(), storage).start();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void stop() {
+        try {
+            serverSocket.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
