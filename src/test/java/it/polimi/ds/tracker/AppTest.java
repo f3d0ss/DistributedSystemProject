@@ -43,7 +43,7 @@ public class AppTest {
 
     @Test
     public void addReplicaTest() throws IOException, ClassNotFoundException {
-        client.sendMessage(new Message(MessageType.ADD_REPLICA, new Address("123.123.123.124", 123)));
+        client.sendMessage(new Message(MessageType.ADD_REPLICA, new Address("123.123.123.123", 123)));
         Message message = client.readMessage();
         assertEquals(MessageType.SEND_OTHER_REPLICAS, message.getType());
         message.getAddressSet().forEach(address -> System.out.println(address.getIp() + ":" + address.getPort()));
@@ -64,6 +64,6 @@ public class AppTest {
 
     @Test
     public void removeClientTest() throws IOException {
-        client.sendMessage(new Message(MessageType.REMOVE_CLIENT));
+        client.sendMessage(new Message(MessageType.REMOVE_CLIENT, new Address("123.123.123.123", 123)));
     }
 }

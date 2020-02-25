@@ -56,6 +56,7 @@ public class App {
                     case ADD_REPLICA:
                         storage.addReplica(inputMessage.getAddress());
                         out.writeObject(new Message(MessageType.SEND_OTHER_REPLICAS, storage.getReplicas()));
+//                      TODO:  Send the new replica to all the other replicas
                         break;
                     case ADD_CLIENT:
                         out.writeObject(new Message(MessageType.SEND_REPLICA, storage.addClient()));

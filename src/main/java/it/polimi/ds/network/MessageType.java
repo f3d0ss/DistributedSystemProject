@@ -48,12 +48,26 @@ public enum MessageType {
         public String hasPayload() {
             return WRITE;
         }
+    },
+    GET_STATE{
+        @Override
+        public String hasPayload() {
+            return null;
+        }
+    },
+    SEND_STATE{
+        @Override
+        public String hasPayload() {
+            return STATE;
+        }
+
     };
 
     public static final String ADDRESS = "ADDRESS";
     public static final String ADDRESS_SET = "ADDRESS_SET";
     public static final String READ = "READ";
     public static final String WRITE = "WRITE";
+    public static final String STATE = "STATE";
 
     public abstract String hasPayload();
 }
