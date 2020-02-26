@@ -12,21 +12,18 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-
 public class Replica {
-    public static final int REPLICA_PORT = 2222; // will be taken from environment
     private Address replicaAddress;
     private Address trackerAddress;
     private List<Address> otherReplicaAddresses;
     private StateHandler state;
     private ServerSocket serverSocket;
     private static final Logger logger = Logger.getLogger("Replica");
+
     public static void main(String[] args) {
         Replica tracker = new Replica();
         tracker.start(args[0], args[1], args[2], args[3]);
     }
-
-
 
     public void start(String trackerIp, String trackerPort, String replicaIp, String replicaPort) {
         int trackerIndex = 0;
@@ -50,6 +47,32 @@ public class Replica {
         }
 
 //        Here I have the state
+        Thread replica = new Thread(() -> runReplica(replicaPort));
+        replica.start();
+        do {
+            logger.log(Level.INFO, "Press 1 to close the Tracker");
+        }
+        while (getChoice() != 1);
+        try {
+            TCPClient tracker = TCPClient.connect(trackerAddress);
+            tracker.out().writeObject(new Message(MessageType.REMOVE_REPLICA, replicaAddress));
+            tracker.close();
+        } catch (IOException e) {
+            logger.log(Level.WARNING, "Could not inform the tracker of the replica closure.");
+        }
+        replica.interrupt();
+    }
+
+    private static int getChoice() {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+        try {
+            return Integer.parseInt(reader.readLine());
+        } catch (NumberFormatException | IOException e) {
+            return -1;
+        }
+    }
+
+    private void runReplica(String replicaPort) {
         try {
             serverSocket = new ServerSocket(Integer.parseInt(replicaPort));
             while (true) {
@@ -59,7 +82,6 @@ public class Replica {
             logger.log(Level.WARNING, "Could not accept replica request.");
         }
         stop();
-
     }
 
     public void stop() {
@@ -97,31 +119,30 @@ public class Replica {
         @Override
         public void run() {
             try {
-                TCPClient replica = new TCPClient(clientSocket);
-                Message inputMessage = (Message) replica.in().readObject();
+                TCPClient client = new TCPClient(clientSocket);
+                Message inputMessage = (Message) client.in().readObject();
                 switch (inputMessage.getType()) {
                     case READ_FROM_CLIENT:
-//                        Do the read
-                        break;
+                        //TODO: Return the correct value to the client
                     case WRITE_FROM_CLIENT:
-//                        Do the write and forward
+                        //TODO: Write the value and send an update to the other replicas
                         break;
                     case UPDATE_FROM_REPLICA:
-//                        Do the update
+                        //TODO: Do the update
                         break;
                     case GET_STATE:
-//                        Serve the state
+                        //TODO: Send the state to the replica
                         break;
                     case SEND_NEW_REPLICA:
-//                        Add the new replica to the VClock
+                        //TODO: Add the new replica to the state
                         break;
                     case REMOVE_OLD_REPLICA:
-//                        Remove the old replica to the VClock
+                        //TODO: Remove the replica from the state
                         break;
                     default:
                         logger.log(Level.WARNING, "Message type not found.");
                 }
-                replica.close();
+                client.close();
                 clientSocket.close();
             } catch (IOException | ClassNotFoundException e) {
                 logger.log(Level.WARNING, "Communication with a replica interrupted.");
