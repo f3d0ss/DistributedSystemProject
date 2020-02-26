@@ -5,26 +5,45 @@ import it.polimi.ds.network.Message;
 import it.polimi.ds.network.MessageType;
 import it.polimi.ds.network.TCPClient;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Tracker {
-    public static final int TRACKER_PORT = 2222; // will be taken from environment
     private ServerSocket serverSocket;
     private Storage storage = new Storage();
     private static final Logger logger = Logger.getLogger("Tracker");
 
     public static void main(String[] args) {
         Tracker tracker = new Tracker();
-        tracker.start(TRACKER_PORT);
+        tracker.start(args[0]);
     }
 
-    public void start(int port) {
+    private void start(String port) {
+        Thread tracker = new Thread(() -> runTracker(Integer.parseInt(port)));
+        tracker.start();
+        do {
+            logger.log(Level.INFO, "Press 1 to close the Tracker");
+        }
+        while (getChoice() != 1);
+        tracker.interrupt();
+    }
+
+    private static int getChoice() {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+        try {
+            return Integer.parseInt(reader.readLine());
+        } catch (NumberFormatException | IOException e) {
+            return -1;
+        }
+    }
+
+    private void runTracker(int port) {
         try {
             serverSocket = new ServerSocket(port);
             while (true) {
@@ -36,7 +55,7 @@ public class Tracker {
         stop();
     }
 
-    public void stop() {
+    private void stop() {
         try {
             serverSocket.close();
         } catch (IOException e) {

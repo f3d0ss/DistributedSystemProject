@@ -11,13 +11,13 @@ import java.io.IOException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TrackerTest {
-    public static final int PORT = Tracker.TRACKER_PORT;
+    public static final int PORT = 2222;
     private static Thread tracker;
     private TCPClient client;
 
     @BeforeAll
     public static void startTracker() {
-        tracker = new Thread(() -> Tracker.main(null));
+        tracker = new Thread(() -> Tracker.main(new String[]{"2222"}));
         tracker.start();
     }
 
