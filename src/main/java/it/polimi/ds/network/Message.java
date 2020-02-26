@@ -21,11 +21,20 @@ public class Message implements Serializable {
         this.address = address;
     }
 
-    public Message(MessageType type, List<Address> addressSet) {
-        if (!type.hasPayload().equals(MessageType.ADDRESS_SET))
+    public Message(MessageType type, Address address, int trackerIndex) {
+        if (!type.hasPayload().equals(MessageType.ADDRESS_TRACKER_INDEX))
+            throw new RuntimeException("This type of message shouldn't have an address");
+        this.type = type;
+        this.address = address;
+        this.trackerIndex = trackerIndex;
+    }
+
+    public Message(MessageType type, List<Address> addressSet, int trackerIndex) {
+        if (!type.hasPayload().equals(MessageType.ADDRESS_SET_TRACKER_INDEX))
             throw new RuntimeException("This type of message shouldn't have an address set");
         this.type = type;
         this.addressSet = addressSet;
+        this.trackerIndex = trackerIndex;
     }
 
     public Message(MessageType type) {

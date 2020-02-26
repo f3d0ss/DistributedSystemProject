@@ -6,9 +6,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
-public class Storage {
+public class Storage extends ReentrantLock {
     private Map<String, Integer> replicas;
+    private Integer trackerIndex = 0;
 
     public Storage() {
         this.replicas = new HashMap<>();
@@ -44,5 +49,9 @@ public class Storage {
 
     protected void removeClient(Address from) {
         replicas.computeIfPresent(from.toString(), (address, integer) -> replicas.put(address, replicas.get(address) - 1));
+    }
+
+    public int incrementAndGetTrackerIndex() {
+        return trackerIndex++;
     }
 }

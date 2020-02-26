@@ -4,7 +4,7 @@ public enum MessageType {
     ADD_REPLICA{
         @Override
         public String hasPayload() {
-            return ADDRESS;
+            return ADDRESS_TRACKER_INDEX;
         }
     },
     ADD_CLIENT{
@@ -16,13 +16,13 @@ public enum MessageType {
     REMOVE_REPLICA{
         @Override
         public String hasPayload() {
-            return ADDRESS;
+            return ADDRESS_TRACKER_INDEX;
         }
     },
     REMOVE_CLIENT{
         @Override
         public String hasPayload() {
-            return ADDRESS;
+            return ADDRESS_TRACKER_INDEX;
         }
     },
     SEND_REPLICA{
@@ -31,10 +31,22 @@ public enum MessageType {
             return ADDRESS;
         }
     },
+    SEND_NEW_REPLICA{
+        @Override
+        public String hasPayload() {
+            return ADDRESS_TRACKER_INDEX;
+        }
+    },
+    REMOVE_OLD_REPLICA{
+        @Override
+        public String hasPayload() {
+            return ADDRESS_TRACKER_INDEX;
+        }
+    },
     SEND_OTHER_REPLICAS{
         @Override
         public String hasPayload() {
-            return ADDRESS_SET;
+            return ADDRESS_SET_TRACKER_INDEX;
         }
     },
     READ_REPLICA{
@@ -69,8 +81,9 @@ public enum MessageType {
         }
     };
 
+    public static final String ADDRESS_TRACKER_INDEX = "ADDRESS_TRACKER_INDEX";
     public static final String ADDRESS = "ADDRESS";
-    public static final String ADDRESS_SET = "ADDRESS_SET";
+    public static final String ADDRESS_SET_TRACKER_INDEX = "ADDRESS_SET_TRACKER_INDEX";
     public static final String READ = "READ";
     public static final String WRITE = "WRITE";
     public static final String STATE = "STATE";

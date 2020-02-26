@@ -4,8 +4,12 @@ import it.polimi.ds.network.Address;
 import it.polimi.ds.network.Message;
 import it.polimi.ds.network.MessageType;
 import it.polimi.ds.network.TCPClient;
+import it.polimi.ds.tracker.Storage;
+import it.polimi.ds.tracker.Tracker;
 
 import java.io.*;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -17,6 +21,7 @@ public class Replica {
     private Address trackerAddress;
     private List<Address> otherReplicaAddresses;
     private StateHandler state;
+    private ServerSocket serverSocket;
     private static final Logger logger = Logger.getLogger("Replica");
     public static void main(String[] args) {
         Replica tracker = new Replica();
@@ -47,7 +52,24 @@ public class Replica {
         }
 
 //        Here I have the state
+        try {
+            serverSocket = new ServerSocket(Integer.parseInt(replicaPort));
+            while (true) {
+                new IncomingMessageHandler(serverSocket.accept(), state).start();
+            }
+        } catch (IOException e) {
+            logger.log(Level.WARNING, "Could not accept replica request.");
+        }
+        stop();
 
+    }
+
+    public void stop() {
+        try {
+            serverSocket.close();
+        } catch (IOException e) {
+            logger.log(Level.WARNING, "Could not close tracker properly.");
+        }
     }
 
 
@@ -63,5 +85,33 @@ public class Replica {
         if (reply.getType().equals(MessageType.SEND_STATE))
             return new StateHandler(reply.getState());
         throw new IOException();
+    }
+
+    private static class IncomingMessageHandler extends Thread {
+        private Socket clientSocket;
+        private StateHandler state;
+
+        public IncomingMessageHandler(Socket socket, StateHandler state) {
+            this.clientSocket = socket;
+            this.state = state;
+        }
+
+        @Override
+        public void run() {
+            try {
+                TCPClient replica = new TCPClient(clientSocket);
+                Message inputMessage = (Message) replica.in().readObject();
+                switch (inputMessage.getType()) {
+                    case ADD_REPLICA:
+                        break;
+                    default:
+                        logger.log(Level.WARNING, "Message type not found.");
+                }
+                replica.close();
+                clientSocket.close();
+            } catch (IOException | ClassNotFoundException e) {
+                logger.log(Level.WARNING, "Communication with a replica interrupted.");
+            }
+        }
     }
 }
