@@ -49,13 +49,13 @@ public enum MessageType {
             return ADDRESS_SET_TRACKER_INDEX;
         }
     },
-    READ_REPLICA{
+    READ_FROM_CLIENT {
         @Override
         public String hasPayload() {
             return READ;
         }
     },
-    WRITE_REPLICA{
+    WRITE_FROM_CLIENT {
         @Override
         public String hasPayload() {
             return WRITE;
@@ -79,6 +79,12 @@ public enum MessageType {
         public String hasPayload() {
             return null;
         }
+    },
+    UPDATE_FROM_REPLICA{
+        @Override
+        public String hasPayload() {
+            return UPDATE;
+        }
     };
 
     public static final String ADDRESS_TRACKER_INDEX = "ADDRESS_TRACKER_INDEX";
@@ -87,6 +93,7 @@ public enum MessageType {
     public static final String READ = "READ";
     public static final String WRITE = "WRITE";
     public static final String STATE = "STATE";
+    public static final String UPDATE = "UPDATE";
     public static final String TRACKER_INDEX = "TRACKER_INDEX";
 
     public abstract String hasPayload();

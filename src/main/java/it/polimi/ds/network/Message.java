@@ -1,6 +1,7 @@
 package it.polimi.ds.network;
 
 import it.polimi.ds.replica.State;
+import it.polimi.ds.replica.Update;
 
 import java.io.Serializable;
 import java.util.List;
@@ -12,6 +13,7 @@ public class Message implements Serializable {
     private String resource;
     private String value;
     private State state;
+    private Update update;
     private int trackerIndex;
 
     public Message(MessageType type, Address address) {
@@ -42,7 +44,7 @@ public class Message implements Serializable {
     }
 
     public Message(MessageType type, String resource) {
-        if(!type.hasPayload().equals(MessageType.WRITE))
+        if(!type.hasPayload().equals(MessageType.READ))
             throw new RuntimeException("This type of message shouldn't have a value");
         this.type = type;
         this.resource = resource;
@@ -68,6 +70,13 @@ public class Message implements Serializable {
             throw new RuntimeException("This type of message shouldn't have a tracker index");
         this.type = type;
         this.trackerIndex = trackerIndex;
+    }
+
+    public Message(MessageType type, Update update) {
+        if(!type.hasPayload().equals(MessageType.TRACKER_INDEX))
+            throw new RuntimeException("This type of message shouldn't have a tracker index");
+        this.type = type;
+        this.update = update;
     }
 
     public MessageType getType() {
@@ -96,5 +105,9 @@ public class Message implements Serializable {
 
     public int getTrackerIndex() {
         return trackerIndex;
+    }
+
+    public Update getUpdate() {
+        return update;
     }
 }

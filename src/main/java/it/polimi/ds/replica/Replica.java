@@ -4,8 +4,6 @@ import it.polimi.ds.network.Address;
 import it.polimi.ds.network.Message;
 import it.polimi.ds.network.MessageType;
 import it.polimi.ds.network.TCPClient;
-import it.polimi.ds.tracker.Storage;
-import it.polimi.ds.tracker.Tracker;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -102,7 +100,23 @@ public class Replica {
                 TCPClient replica = new TCPClient(clientSocket);
                 Message inputMessage = (Message) replica.in().readObject();
                 switch (inputMessage.getType()) {
-                    case ADD_REPLICA:
+                    case READ_FROM_CLIENT:
+//                        Do the read
+                        break;
+                    case WRITE_FROM_CLIENT:
+//                        Do the write and forward
+                        break;
+                    case UPDATE_FROM_REPLICA:
+//                        Do the update
+                        break;
+                    case GET_STATE:
+//                        Serve the state
+                        break;
+                    case SEND_NEW_REPLICA:
+//                        Add the new replica to the VClock
+                        break;
+                    case REMOVE_OLD_REPLICA:
+//                        Remove the old replica to the VClock
                         break;
                     default:
                         logger.log(Level.WARNING, "Message type not found.");

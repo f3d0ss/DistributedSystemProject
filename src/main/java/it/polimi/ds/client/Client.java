@@ -52,7 +52,7 @@ public class Client {
                     // Reading a value, inputString = read <resource>
                     case "read":
                         replicaSocket = TCPClient.connect(replicaAddress);
-                        replicaSocket.out().writeObject(new Message(MessageType.READ_REPLICA, splittedString[1]));
+                        replicaSocket.out().writeObject(new Message(MessageType.READ_FROM_CLIENT, splittedString[1]));
                         inputMessage = (Message) serverSocket.in().readObject();
                         System.out.println("Resource " + inputMessage.getResource() + " has value " + inputMessage.getValue() + ".");
                         replicaSocket.close();
@@ -60,7 +60,7 @@ public class Client {
                     // Writing a value, inputString = write <resource> <value>
                     case "write":
                         replicaSocket = TCPClient.connect(replicaAddress);
-                        replicaSocket.out().writeObject(new Message(MessageType.WRITE_REPLICA, splittedString[1], splittedString[2]));
+                        replicaSocket.out().writeObject(new Message(MessageType.WRITE_FROM_CLIENT, splittedString[1], splittedString[2]));
                         replicaSocket.close();
                         logger.log(Level.INFO,"Value correctly registered.");
                         break;

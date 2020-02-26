@@ -36,15 +36,15 @@ public class StateHandler {
         state.write(newVector, key, value);
     }
 
-    public void replicaWrite(Map<String, Integer> updateVectorClock, Address from, String key, String value){
+    public void replicaWrite(Update update){
         Map<String, Integer> myVector = state.getVectorClock();
-        int check = vectorCheck(myVector, updateVectorClock, from);
+        int check = vectorCheck(myVector, update.getVectorClock(), update.getFrom());
         if (check == ACCEPT){
-            myVector.put(from.toString(), myVector.get(from.toString()) + 1); // myVector[from] ++
-            state.write(myVector, key, value);
+            myVector.put(update.getFrom().toString(), myVector.get(update.getFrom().toString()) + 1); // myVector[from] ++
+            state.write(myVector, update.getKey(), update.getValue());
             checkUpdateQueue();
         }else if(check == ADD_TO_QUEUE) {
-            queue.add(new Update(updateVectorClock, from, key, value));
+            queue.add(update);
         }
     }
 
@@ -77,33 +77,5 @@ public class StateHandler {
         return ACCEPT;
     }
 
-    private static class Update{
-        private Map<String, Integer> vectorClock;
-        private Address from;
-        private String key;
-        private String value;
 
-        public Update(Map<String, Integer> vectorClock, Address from, String key, String value) {
-            this.vectorClock = vectorClock;
-            this.from = from;
-            this.key = key;
-            this.value = value;
-        }
-
-        public Map<String, Integer> getVectorClock() {
-            return vectorClock;
-        }
-
-        public Address getFrom() {
-            return from;
-        }
-
-        public String getKey() {
-            return key;
-        }
-
-        public String getValue() {
-            return value;
-        }
-    }
 }
