@@ -52,7 +52,7 @@ public enum MessageType {
     GET_STATE{
         @Override
         public String hasPayload() {
-            return null;
+            return TRACKER_INDEX;
         }
     },
     SEND_STATE{
@@ -61,6 +61,12 @@ public enum MessageType {
             return STATE;
         }
 
+    },
+    NOT_STATE{
+        @Override
+        public String hasPayload() {
+            return null;
+        }
     };
 
     public static final String ADDRESS = "ADDRESS";
@@ -68,6 +74,7 @@ public enum MessageType {
     public static final String READ = "READ";
     public static final String WRITE = "WRITE";
     public static final String STATE = "STATE";
+    public static final String TRACKER_INDEX = "TRACKER_INDEX";
 
     public abstract String hasPayload();
 }

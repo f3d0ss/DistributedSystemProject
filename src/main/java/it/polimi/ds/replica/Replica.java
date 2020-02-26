@@ -18,48 +18,50 @@ public class Replica {
     private List<Address> otherReplicaAddresses;
     private StateHandler state;
     private static final Logger logger = Logger.getLogger("Replica");
-
     public static void main(String[] args) {
         Replica tracker = new Replica();
         tracker.start(args[0], args[1], args[2], args[3]);
     }
 
+
+
     public void start(String trackerIp, String trackerPort, String replicaIp, String replicaPort) {
+        int trackerIndex = 0;
         this.trackerAddress = new Address(trackerIp, Integer.valueOf(trackerPort));
         this.replicaAddress = new Address(replicaIp, Integer.valueOf(replicaPort));
-        try {
-            joinNetwork(TCPClient.connect(trackerAddress));
-        } catch (IOException e) {
-            logger.log(Level.WARNING, "Impossible to contact the server, exiting.");
-            return;
+        while (trackerIndex == 0){
+            try {
+                trackerIndex = joinNetwork(TCPClient.connect(trackerAddress));
+            } catch (IOException | ClassNotFoundException e) {
+                logger.log(Level.WARNING, "Impossible to contact the server, exiting.");
+            }
         }
 //        Try to get the state from one of the replicas
-        for (Address otherReplica: otherReplicaAddresses){
+        for (int i = 0; state == null ; i++) {
+            Address otherReplica = otherReplicaAddresses.get(i % otherReplicaAddresses.size());
             try {
-                getState(TCPClient.connect(otherReplica));
-                break;
-            } catch (IOException e) {
+                state = getState(TCPClient.connect(otherReplica), trackerIndex);
+            } catch (IOException | ClassNotFoundException e) {
                 logger.log(Level.WARNING, () -> "Impossible to get a valid state from " + otherReplicaAddresses + ", trying an other one.");
             }
         }
+
+//        Here I have the state
+
     }
 
 
-    private void joinNetwork(TCPClient client) throws IOException {
+    private int joinNetwork(TCPClient client) throws IOException, ClassNotFoundException {
         client.out().writeObject(new Message(MessageType.ADD_REPLICA, replicaAddress));
-        try {
-            otherReplicaAddresses = ((Message) client.in().readObject()).getAddressSet();
-        } catch (ClassNotFoundException e) {
-            logger.log(Level.WARNING, "Could not read the message.");
-        }
+        otherReplicaAddresses = ((Message) client.in().readObject()).getAddressSet();
+        return ((Message) client.in().readObject()).getTrackerIndex();
     }
 
-    private void getState(TCPClient client) throws IOException {
-        client.out().writeObject(new Message(MessageType.GET_STATE));
-        try {
-            state = new StateHandler(((Message) client.in().readObject()).getState());
-        } catch (ClassNotFoundException e) {
-            logger.log(Level.WARNING, "Could not read the message.");
-        }
+    private StateHandler getState(TCPClient client, int trackerIndex) throws IOException, ClassNotFoundException {
+        client.out().writeObject(new Message(MessageType.GET_STATE, trackerIndex));
+        Message reply = ((Message) client.in().readObject());
+        if (reply.getType().equals(MessageType.SEND_STATE))
+            return new StateHandler(reply.getState());
+        throw new IOException();
     }
 }

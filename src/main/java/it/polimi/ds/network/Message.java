@@ -12,6 +12,7 @@ public class Message implements Serializable {
     private String resource;
     private String value;
     private State state;
+    private int trackerIndex;
 
     public Message(MessageType type, Address address) {
         if (!type.hasPayload().equals(MessageType.ADDRESS))
@@ -53,6 +54,13 @@ public class Message implements Serializable {
         this.state = state;
     }
 
+    public Message(MessageType type, int trackerIndex) {
+        if(!type.hasPayload().equals(MessageType.TRACKER_INDEX))
+            throw new RuntimeException("This type of message shouldn't have a tracker index");
+        this.type = type;
+        this.trackerIndex = trackerIndex;
+    }
+
     public MessageType getType() {
         return type;
     }
@@ -75,5 +83,9 @@ public class Message implements Serializable {
 
     public State getState() {
         return state;
+    }
+
+    public int getTrackerIndex() {
+        return trackerIndex;
     }
 }
