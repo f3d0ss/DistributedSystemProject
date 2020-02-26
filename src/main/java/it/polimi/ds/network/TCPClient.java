@@ -42,6 +42,8 @@ public class TCPClient {
 
     public void close() {
         try {
+            in.close();
+            out.close();
             connectedSocket.close();
         } catch (IOException e) {
             logger.log(Level.WARNING, "IOException, Class TCPClient", e);

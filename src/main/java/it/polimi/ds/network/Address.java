@@ -1,6 +1,7 @@
 package it.polimi.ds.network;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 public class Address implements Serializable {
     private String ip;
@@ -28,6 +29,11 @@ public class Address implements Serializable {
         if (obj instanceof Address)
             return ((Address) obj).getIp().equals(ip) && ((Address) obj).getPort().equals(port);
         return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(ip, port);
     }
 
     public static Address fromString(String address) {

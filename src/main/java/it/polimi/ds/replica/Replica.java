@@ -6,17 +6,18 @@ import it.polimi.ds.network.MessageType;
 import it.polimi.ds.network.TCPClient;
 
 import java.io.*;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 
 public class Replica {
     public static final int REPLICA_PORT = 2222; // will be taken from environment
     private Address replicaAddress;
     private Address trackerAddress;
-    private ArrayList<Address> otherReplicaAddresses;
+    private List<Address> otherReplicaAddresses;
     private StateHandler state;
+    private static final Logger logger = Logger.getLogger("Replica");
 
     public static void main(String[] args) {
         Replica tracker = new Replica();
@@ -29,7 +30,8 @@ public class Replica {
         try {
             joinNetwork(TCPClient.connect(trackerAddress));
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.log(Level.WARNING, "Impossible to contact the server, exiting.");
+            return;
         }
 //        Try to get the state from one of the replicas
         for (Address otherReplica: otherReplicaAddresses){
@@ -37,7 +39,7 @@ public class Replica {
                 getState(TCPClient.connect(otherReplica));
                 break;
             } catch (IOException e) {
-                e.printStackTrace();
+                logger.log(Level.WARNING, () -> "Impossible to get a valid state from " + otherReplicaAddresses + ", trying an other one.");
             }
         }
     }
@@ -48,7 +50,7 @@ public class Replica {
         try {
             otherReplicaAddresses = ((Message) client.in().readObject()).getAddressSet();
         } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+            logger.log(Level.WARNING, "Could not read the message.");
         }
     }
 
@@ -57,7 +59,7 @@ public class Replica {
         try {
             state = new StateHandler(((Message) client.in().readObject()).getState());
         } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+            logger.log(Level.WARNING, "Could not read the message.");
         }
     }
 }

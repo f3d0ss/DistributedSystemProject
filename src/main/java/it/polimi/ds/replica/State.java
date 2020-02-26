@@ -4,23 +4,23 @@ import it.polimi.ds.network.Address;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.Map;
 
 public class State implements Serializable {
-    private HashMap<String, Integer> vectorClock;
-    private HashMap<String, String> store;
+    private Map<String, Integer> vectorClock;
+    private Map<String, String> store;
 
     public State(Address myAddress) {
         vectorClock = new HashMap<>();
         vectorClock.put(myAddress.toString(), 0);
         store = new HashMap<>();
-
     }
 
-    public HashMap<String, Integer> getVectorClock() {
+    public Map<String, Integer> getVectorClock() {
         return new HashMap<>(vectorClock);
     }
 
-    public void write(HashMap<String, Integer> vectorClock, String key, String value){
+    public void write(Map<String, Integer> vectorClock, String key, String value){
         this.vectorClock = new HashMap<>(vectorClock);
         store.put(key, value);
     }
@@ -28,6 +28,4 @@ public class State implements Serializable {
     public String read(String key){
         return store.get(key);
     }
-
-
 }

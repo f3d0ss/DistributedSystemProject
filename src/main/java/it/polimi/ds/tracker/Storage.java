@@ -4,8 +4,8 @@ import it.polimi.ds.network.Address;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class Storage {
     private Map<String, Integer> replicas;
@@ -22,8 +22,8 @@ public class Storage {
         replicas.remove(address.toString());
     }
 
-    protected ArrayList<Address> getReplicas() {
-        ArrayList<Address> addresses = new ArrayList<>();
+    protected List<Address> getReplicas() {
+        List<Address> addresses = new ArrayList<>();
         replicas.keySet().forEach(s -> addresses.add(Address.fromString(s)));
         return addresses;
     }

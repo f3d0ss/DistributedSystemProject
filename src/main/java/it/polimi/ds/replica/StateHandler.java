@@ -2,7 +2,6 @@ package it.polimi.ds.replica;
 
 import it.polimi.ds.network.Address;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
 
@@ -28,13 +27,13 @@ public class StateHandler {
     }
 
     public void clientWrite(Address replicaAddress, String key, String value){
-        HashMap<String, Integer> newVector = state.getVectorClock();
+        Map<String, Integer> newVector = state.getVectorClock();
         newVector.put(replicaAddress.toString(), newVector.get(replicaAddress.toString()) + 1);
         state.write(newVector, key, value);
     }
 
-    public void replicaWrite(HashMap<String, Integer> updateVectorClock, Address from, String key, String value){
-        HashMap<String, Integer> myVector = state.getVectorClock();
+    public void replicaWrite(Map<String, Integer> updateVectorClock, Address from, String key, String value){
+        Map<String, Integer> myVector = state.getVectorClock();
         if (vectorCheck(myVector, updateVectorClock, from)){
             myVector.put(from.toString(), myVector.get(from.toString()) + 1); // myVector[from] ++
             state.write(myVector, key, value);
@@ -45,7 +44,7 @@ public class StateHandler {
     }
 
     private void checkUpdateQueue(){
-        HashMap<String, Integer> myVector = state.getVectorClock();
+        Map<String, Integer> myVector = state.getVectorClock();
         for (Update update: queue){
             if (vectorCheck(myVector, update.getVectorClock(), update.getFrom())){
                 queue.remove(update);
@@ -57,7 +56,7 @@ public class StateHandler {
         }
     }
 
-    private static boolean vectorCheck(HashMap<String, Integer> oldVector, HashMap<String, Integer> newVector, Address from){
+    private static boolean vectorCheck(Map<String, Integer> oldVector, Map<String, Integer> newVector, Address from){
         for (Map.Entry<String, Integer> entry : newVector.entrySet()) {
             String key = entry.getKey();
             int value = entry.getValue();
@@ -70,19 +69,19 @@ public class StateHandler {
     }
 
     private static class Update{
-        private HashMap<String, Integer> vectorClock;
+        private Map<String, Integer> vectorClock;
         private Address from;
         private String key;
         private String value;
 
-        public Update(HashMap<String, Integer> vectorClock, Address from, String key, String value) {
+        public Update(Map<String, Integer> vectorClock, Address from, String key, String value) {
             this.vectorClock = vectorClock;
             this.from = from;
             this.key = key;
             this.value = value;
         }
 
-        public HashMap<String, Integer> getVectorClock() {
+        public Map<String, Integer> getVectorClock() {
             return vectorClock;
         }
 

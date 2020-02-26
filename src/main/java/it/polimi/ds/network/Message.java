@@ -3,12 +3,12 @@ package it.polimi.ds.network;
 import it.polimi.ds.replica.State;
 
 import java.io.Serializable;
-import java.util.ArrayList;
+import java.util.List;
 
 public class Message implements Serializable {
     private MessageType type;
     private Address address;
-    private ArrayList<Address> addressSet;
+    private List<Address> addressSet;
     private String resource;
     private String value;
     private State state;
@@ -20,7 +20,7 @@ public class Message implements Serializable {
         this.address = address;
     }
 
-    public Message(MessageType type, ArrayList<Address> addressSet) {
+    public Message(MessageType type, List<Address> addressSet) {
         if (!type.hasPayload().equals(MessageType.ADDRESS_SET))
             throw new RuntimeException("This type of message shouldn't have an address set");
         this.type = type;
@@ -61,7 +61,7 @@ public class Message implements Serializable {
         return address;
     }
 
-    public ArrayList<Address> getAddressSet() {
+    public List<Address> getAddressSet() {
         return addressSet;
     }
 
