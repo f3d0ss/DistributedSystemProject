@@ -165,7 +165,7 @@ public class Replica {
                         getReplicaState();
                         break;
                     case SEND_NEW_REPLICA:
-                        sendNewReplica();
+                        addNewReplica();
                         break;
                     case REMOVE_OLD_REPLICA:
                         removeOldReplica();
@@ -186,7 +186,7 @@ public class Replica {
 
         private void writeFromClient(String resource, String value) {
             Update update = state.clientWrite(resource, value);
-            //GET indexTracker (because not send to new replicas)
+            // TODO: GET indexTracker (because not send to new replicas)
             int trackerIndex = Replica.trackerIndex;
             for (Address address : otherReplicaAddresses) {
                 Replica.addMessageToBeSent();
@@ -205,31 +205,33 @@ public class Replica {
             try {
                 TCPClient replica = TCPClient.connect(otherReplica);
                 replica.out().writeObject(new Message(MessageType.UPDATE_FROM_REPLICA, update, trackerIndex));
-                /* need to check if reply with `wait` (my trackerIndex is less then the receiver) and if so put the message in a queue.
-                *  The queue need to listen on trackerIndex update, when trackerIndex is updated (incremented) try resend the message to all otherReplica*/
-                Replica.removeMessageToBeSent();
+                /* TODO: need to check if reply with `wait` (my trackerIndex is less then the receiver) and if so put the message in a queue.
+                         The queue need to listen on trackerIndex update, when trackerIndex is updated (incremented) try resend the message to all otherReplica */
                 replica.close();
             } catch (IOException e) {
                 logger.log(Level.SEVERE, () -> "Could not update replica " + otherReplica + " properly.");
                 if (activeReplicas.contains(otherReplica))
                     runWriteSender(otherReplica, update, activeReplicas, trackerIndex);
             }
+            Replica.removeMessageToBeSent();
         }
 
         private void updateFromReplica() {
-            //TODO
+            /* TODO: Check if the vectorClock of the update and the trackerIndex are ok.
+                     If so process the update, otherwise put it in the queue.
+                     When an update is accepted also re-check the queued messages. */
         }
 
         private void getReplicaState() {
-            //TODO
+            /* TODO: Send the whole state to the requesting replica. */
         }
 
-        private void sendNewReplica() {
-            //TODO
+        private void addNewReplica() {
+            /* TODO: Add a new entry in the vectorClock hashMap. */
         }
 
         private void removeOldReplica() {
-            //TODO
+            /* TODO: Remove the corresponding entry in the vectorClock hashMap. */
         }
     }
 }
