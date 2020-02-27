@@ -188,6 +188,11 @@ public class Replica {
             Update update = state.clientWrite(resource, value);
             // TODO: GET indexTracker (because not send to new replicas)
             int trackerIndex = Replica.trackerIndex;
+/*          here after reading the trackerIndex a thread could increment it and update the otherReplicaAddress,
+            we don't care, because if it was updated by an Exit from another replica it'ok if we don't send the update to the exited replica (would be check later otherwise)
+            if it was updated by a Join we will simply send the update to the new replica who will reply with `wait` causing the resend of the message, no biggy
+ */
+
             for (Address address : otherReplicaAddresses) {
                 Replica.addMessageToBeSent();
                 Thread writeSender = new Thread(() -> runWriteSender(address, update, otherReplicaAddresses, trackerIndex));
@@ -217,21 +222,39 @@ public class Replica {
         }
 
         private void updateFromReplica() {
-            /* TODO: Check if the vectorClock of the update and the trackerIndex are ok.
-                     If so process the update, otherwise put it in the queue.
-                     When an update is accepted also re-check the queued messages. */
+            /* TODO: Check the incoming trackerInsex ITI, if:
+                ITI > my trackerIndex MTI then put the message in `updates from replicas waiting for T` queue
+                            (maybe could be processed thanks to assumption `before exit finish propagate update`, TOTHINK)
+                ITI < MTI then reply with `wait` message
+                ITI = MTI then process then execute state.replicaWrite
+                NOTE: check ITI = MTI and execute state.replicaWrite should be atomic, otherwise after the check and before the replicaWrite
+                the replica could receive a Join from the Tracker and give his state to the neo joined Replica
+                and then process the update without replying with `wait`*/
         }
 
         private void getReplicaState() {
-            /* TODO: Send the whole state to the requesting replica. */
+            /* TODO: Check the incoming trackerInsex ITI, if:
+                ITI > my trackerIndex MTI reply with `I do not know u yet`
+                ITI < MTI then should be ok to send the state otherwise (reply with `wait` message)
+                ITI = MTI Send the whole state to the requesting replica.
+                Note: send state and queue
+                */
         }
 
         private void addNewReplica() {
-            /* TODO: Add a new entry in the vectorClock hashMap. */
+            /* TODO: Check the incoming trackerInsex ITI, if:
+                ITI > my trackerIndex MTI + 1 then put the message in `updates from tracker waiting for T` queue
+                ITI < MTI + 1 message already received, ignore
+                ITI = MTI + 1 then add the Replica to the VClock and update MTI
+                Note: the update of the MTI should cause the checking of the `updates from tracker waiting for T` and  `updates from replicas waiting for T` queues */
         }
 
         private void removeOldReplica() {
-            /* TODO: Remove the corresponding entry in the vectorClock hashMap. */
+            /* TODO: Check the incoming trackerInsex ITI, if:
+                ITI > my trackerIndex MTI + 1 then put the message in `updates from tracker waiting for T` queue
+                ITI < MTI + 1 message already received, ignore
+                ITI = MTI + 1 then remove the Replica from the VClock and update MTI
+                Note: the update of the MTI should cause the checking of the `updates from tracker waiting for T` and  `updates from replicas waiting for T` queues */
         }
     }
 }
