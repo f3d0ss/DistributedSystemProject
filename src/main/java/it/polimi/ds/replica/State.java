@@ -28,4 +28,12 @@ public class State implements Serializable {
     public String read(String key){
         return store.get(key);
     }
+
+    public void removeKey(String key) {
+        vectorClock.remove(key);
+    }
+
+    public void addKey(String key) {
+        vectorClock.put(key, 0);
+    }
 }

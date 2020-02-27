@@ -51,7 +51,7 @@ public class Message implements Serializable {
     }
 
     public Message(MessageType type, String resource, String value) {
-        if(!type.hasPayload().equals(MessageType.WRITE))
+        if(!type.hasPayload().equals(MessageType.KEY_VALUE))
             throw new RuntimeException("This type of message shouldn't have a resource or value");
         this.type = type;
         this.resource = resource;
@@ -59,7 +59,7 @@ public class Message implements Serializable {
     }
 
     public Message(MessageType type, State state) {
-        if(!type.hasPayload().equals(MessageType.STATE))
+        if(!type.hasPayload().equals(MessageType.KEY))
             throw new RuntimeException("This type of message shouldn't have a state");
         this.type = type;
         this.state = state;
@@ -72,11 +72,12 @@ public class Message implements Serializable {
         this.trackerIndex = trackerIndex;
     }
 
-    public Message(MessageType type, Update update) {
+    public Message(MessageType type, Update update, int trackerIndex) {
         if(!type.hasPayload().equals(MessageType.UPDATE))
             throw new RuntimeException("This type of message shouldn't have an update");
         this.type = type;
         this.update = update;
+        this.trackerIndex = trackerIndex;
     }
 
     public MessageType getType() {

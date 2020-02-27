@@ -13,9 +13,11 @@ public class StateHandler {
 
     private State state;
     private Queue<Update> queue;
+    private Address replicaAddress;
 
-    public StateHandler(State state) {
+    public StateHandler(State state, Address replicaAddress) {
         this.state = state;
+        this.replicaAddress = replicaAddress;
     }
 
     public State getState() {
@@ -30,13 +32,22 @@ public class StateHandler {
         return state.read(key);
     }
 
-    public void clientWrite(Address replicaAddress, String key, String value){
+    public synchronized void removeAddressKey(Address address){
+        state.removeKey(address.toString());
+    }
+
+    public synchronized void addAddressKey(Address address){
+        state.addKey(address.toString());
+    }
+
+    public synchronized Update clientWrite(String key, String value){
         Map<String, Integer> newVector = state.getVectorClock();
         newVector.put(replicaAddress.toString(), newVector.get(replicaAddress.toString()) + 1);
         state.write(newVector, key, value);
+        return new Update(newVector, replicaAddress, key, value);
     }
 
-    public void replicaWrite(Update update){
+    public synchronized void replicaWrite(Update update){
         Map<String, Integer> myVector = state.getVectorClock();
         int check = vectorCheck(myVector, update.getVectorClock(), update.getFrom());
         if (check == ACCEPT){
@@ -61,17 +72,17 @@ public class StateHandler {
         }
     }
 
-    private static int vectorCheck(Map<String, Integer> oldVector, Map<String, Integer> newVector, Address from){
+    private static int vectorCheck(Map<String, Integer> myVector, Map<String, Integer> newVector, Address from){
         for (Map.Entry<String, Integer> entry : newVector.entrySet()) {
             String key = entry.getKey();
             int value = entry.getValue();
             if (key.equals(from.toString())){
-                if(value < oldVector.getOrDefault(key, 0) + 1)
+                if(value < myVector.getOrDefault(key, 0) + 1)
                     return DISCARD;
-                else if (value > oldVector.getOrDefault(key, 0) + 1)
+                else if (value > myVector.getOrDefault(key, 0) + 1)
                     return ADD_TO_QUEUE;
             }
-            if (value > oldVector.getOrDefault(key, 0))
+            if (myVector.containsKey(key) && value > myVector.get(key))
                 return ADD_TO_QUEUE;
         }
         return ACCEPT;

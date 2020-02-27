@@ -10,6 +10,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -19,7 +20,8 @@ public class Replica {
     private List<Address> otherReplicaAddresses;
     private StateHandler state;
     private ServerSocket serverSocket;
-    private static int messagesLeftToSend = 0;
+    private static int trackerIndex;     //need to be shared
+    private static AtomicInteger messagesLeftToSend = new AtomicInteger(0);
     private static final Logger logger = Logger.getLogger("Replica");
 
     public static void main(String[] args) {
@@ -39,6 +41,10 @@ public class Replica {
             }
         }
 //        Try to get the state from one of the replicas
+        if (otherReplicaAddresses.isEmpty()){
+            state = new StateHandler(new State(replicaAddress), replicaAddress);
+        }
+
         for (int i = 0; state == null ; i++) {
             Address otherReplica = otherReplicaAddresses.get(i % otherReplicaAddresses.size());
             try {
@@ -56,7 +62,7 @@ public class Replica {
         }
         while (getChoice() != 1);
         logger.log(Level.INFO, "Waiting until all messages are sent...");
-        while (messagesLeftToSend != 0) {
+        while (messagesLeftToSend.get() != 0) {
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
@@ -114,16 +120,16 @@ public class Replica {
         client.out().writeObject(new Message(MessageType.GET_STATE, trackerIndex));
         Message reply = ((Message) client.in().readObject());
         if (reply.getType().equals(MessageType.SEND_STATE))
-            return new StateHandler(reply.getState());
+            return new StateHandler(reply.getState(), replicaAddress);
         throw new IOException();
     }
 
     public static void addMessageToBeSent() {
-        messagesLeftToSend++;
+        messagesLeftToSend.incrementAndGet();
     }
 
     public static void removeMessageToBeSent() {
-        messagesLeftToSend--;
+        messagesLeftToSend.decrementAndGet();
     }
 
     private static class IncomingMessageHandler extends Thread {
@@ -137,6 +143,7 @@ public class Replica {
             this.otherReplicaAddresses = new ArrayList<>(otherReplicaAddresses);
             this.clientSocket = socket;
             this.state = state;
+            this.otherReplicaAddresses = otherReplicaAddresses;
         }
 
         @Override
@@ -147,7 +154,6 @@ public class Replica {
                 switch (inputMessage.getType()) {
                     case READ_FROM_CLIENT:
                         client.out().writeObject(readFromClient(inputMessage.getResource()));
-                        client.close();
                         break;
                     case WRITE_FROM_CLIENT:
                         writeFromClient(inputMessage.getResource(), inputMessage.getValue());
@@ -175,26 +181,38 @@ public class Replica {
         }
 
         private Message readFromClient(String resource) {
-            return new Message(MessageType.READ_ANSWER, resource, state.read(resource));
+                return new Message(MessageType.READ_ANSWER, resource, state.read(resource));
         }
 
         private void writeFromClient(String resource, String value) {
-            state.clientWrite(replicaAddress, resource, value);
+            Update update = state.clientWrite(resource, value);
+            //GET indexTracker (because not send to new replicas)
+            int trackerIndex = Replica.trackerIndex;
             for (Address address : otherReplicaAddresses) {
                 Replica.addMessageToBeSent();
-                Thread writeSender = new Thread(() -> runWriteSender(address, new Update(state.getState().getVectorClock(), replicaAddress, resource, value)));
+                Thread writeSender = new Thread(() -> runWriteSender(address, update, otherReplicaAddresses, trackerIndex));
                 writeSender.start();
             }
         }
 
-        private void runWriteSender(Address otherReplica, Update update) {
+        /**
+         * This method continuously try to connect to otherReplica to send the update if otherReplica is still in the list of active replicas (activeReplicas)
+         * @param otherReplica this is the
+         * @param update this is the update to be sent
+         * @param activeReplicas this is used to check other replica is removed from the list of activeReplica
+         */
+        private void runWriteSender(Address otherReplica, Update update, List<Address> activeReplicas, int trackerIndex) {
             try {
                 TCPClient replica = TCPClient.connect(otherReplica);
-                replica.out().writeObject(new Message(MessageType.UPDATE_FROM_REPLICA, update));
+                replica.out().writeObject(new Message(MessageType.UPDATE_FROM_REPLICA, update, trackerIndex));
+                /* need to check if reply with `wait` (my trackerIndex is less then the receiver) and if so put the message in a queue.
+                *  The queue need to listen on trackerIndex update, when trackerIndex is updated (incremented) try resend the message to all otherReplica*/
                 Replica.removeMessageToBeSent();
                 replica.close();
             } catch (IOException e) {
                 logger.log(Level.SEVERE, () -> "Could not update replica " + otherReplica + " properly.");
+                if (activeReplicas.contains(otherReplica))
+                    runWriteSender(otherReplica, update, activeReplicas, trackerIndex);
             }
         }
 
