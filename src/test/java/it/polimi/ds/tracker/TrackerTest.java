@@ -38,7 +38,7 @@ public class TrackerTest {
 
     @Test
     public void addReplicaTest() throws IOException, ClassNotFoundException {
-        client.out().writeObject(new Message(MessageType.ADD_REPLICA, new Address("123.123.123.123", 123)));
+        client.out().writeObject(new Message(MessageType.ADD_REPLICA, new Address("123.123.123.123", 123), 0));
         Message message = (Message) client.in().readObject();
         assertEquals(MessageType.SEND_OTHER_REPLICAS, message.getType());
         message.getAddressSet().forEach(address -> System.out.println(address.getIp() + ":" + address.getPort()));
@@ -46,12 +46,12 @@ public class TrackerTest {
 
     @Test
     public void removeReplicaTest() throws IOException {
-        client.out().writeObject(new Message(MessageType.REMOVE_REPLICA, new Address("123.123.123.123", 123)));
+        client.out().writeObject(new Message(MessageType.REMOVE_REPLICA, new Address("123.123.123.123", 123), 0));
     }
 
     @Test
     public void addClientTest() throws IOException, ClassNotFoundException {
-        client.out().writeObject(new Message(MessageType.ADD_REPLICA, new Address("123.123.123.123", 123)));
+        client.out().writeObject(new Message(MessageType.ADD_REPLICA, new Address("123.123.123.123", 123), 0));
         Message message = (Message) client.in().readObject();
         assertEquals(MessageType.SEND_OTHER_REPLICAS, message.getType());
         TCPClient client2 = TCPClient.connect("127.0.0.1", PORT);
@@ -63,6 +63,6 @@ public class TrackerTest {
 
     @Test
     public void removeClientTest() throws IOException {
-        client.out().writeObject(new Message(MessageType.REMOVE_CLIENT, new Address("123.123.123.123", 123)));
+        client.out().writeObject(new Message(MessageType.REMOVE_CLIENT, new Address("123.123.123.123", 123), 0));
     }
 }

@@ -61,6 +61,12 @@ public enum MessageType {
             return WRITE;
         }
     },
+    READ_ANSWER {
+        @Override
+        public String hasPayload() {
+            return MessageType.WRITE;
+        }
+    },
     GET_STATE{
         @Override
         public String hasPayload() {

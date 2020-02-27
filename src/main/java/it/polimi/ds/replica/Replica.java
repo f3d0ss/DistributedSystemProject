@@ -8,6 +8,7 @@ import it.polimi.ds.network.TCPClient;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -18,6 +19,7 @@ public class Replica {
     private List<Address> otherReplicaAddresses;
     private StateHandler state;
     private ServerSocket serverSocket;
+    private static int messagesLeftToSend = 0;
     private static final Logger logger = Logger.getLogger("Replica");
 
     public static void main(String[] args) {
@@ -33,7 +35,7 @@ public class Replica {
             try {
                 trackerIndex = joinNetwork(TCPClient.connect(trackerAddress));
             } catch (IOException | ClassNotFoundException e) {
-                logger.log(Level.WARNING, "Impossible to contact the server, exiting.");
+                logger.log(Level.SEVERE, "Impossible to contact the server, exiting.");
             }
         }
 //        Try to get the state from one of the replicas
@@ -53,14 +55,24 @@ public class Replica {
             logger.log(Level.INFO, "Press 1 to close the Tracker");
         }
         while (getChoice() != 1);
+        logger.log(Level.INFO, "Waiting until all messages are sent...");
+        while (messagesLeftToSend != 0) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                logger.log(Level.SEVERE, "Could not send all the messages to other replica properly.");
+                Thread.currentThread().interrupt();
+            }
+        }
         try {
             TCPClient tracker = TCPClient.connect(trackerAddress);
             tracker.out().writeObject(new Message(MessageType.REMOVE_REPLICA, replicaAddress));
             tracker.close();
         } catch (IOException e) {
-            logger.log(Level.WARNING, "Could not inform the tracker of the replica closure.");
+            logger.log(Level.SEVERE, "Could not inform the tracker of the replica closure.");
         }
         replica.interrupt();
+        logger.log(Level.INFO, "This replica has correctly been closed.");
     }
 
     private static int getChoice() {
@@ -76,10 +88,10 @@ public class Replica {
         try {
             serverSocket = new ServerSocket(Integer.parseInt(replicaPort));
             while (true) {
-                new IncomingMessageHandler(serverSocket.accept(), state).start();
+                new IncomingMessageHandler(replicaAddress, otherReplicaAddresses, serverSocket.accept(), state).start();
             }
         } catch (IOException e) {
-            logger.log(Level.WARNING, "Could not accept replica request.");
+            logger.log(Level.SEVERE, "Could not accept the request.");
         }
         stop();
     }
@@ -88,10 +100,9 @@ public class Replica {
         try {
             serverSocket.close();
         } catch (IOException e) {
-            logger.log(Level.WARNING, "Could not close tracker properly.");
+            logger.log(Level.SEVERE, "Could not close tracker properly.");
         }
     }
-
 
     private int joinNetwork(TCPClient client) throws IOException, ClassNotFoundException {
         client.out().writeObject(new Message(MessageType.ADD_REPLICA, replicaAddress));
@@ -107,11 +118,23 @@ public class Replica {
         throw new IOException();
     }
 
+    public static void addMessageToBeSent() {
+        messagesLeftToSend++;
+    }
+
+    public static void removeMessageToBeSent() {
+        messagesLeftToSend--;
+    }
+
     private static class IncomingMessageHandler extends Thread {
+        private Address replicaAddress;
+        private List<Address> otherReplicaAddresses;
         private Socket clientSocket;
         private StateHandler state;
 
-        public IncomingMessageHandler(Socket socket, StateHandler state) {
+        public IncomingMessageHandler(Address replicaAddress, List<Address> otherReplicaAddresses, Socket socket, StateHandler state) {
+            this.replicaAddress = replicaAddress;
+            this.otherReplicaAddresses = new ArrayList<>(otherReplicaAddresses);
             this.clientSocket = socket;
             this.state = state;
         }
@@ -123,21 +146,23 @@ public class Replica {
                 Message inputMessage = (Message) client.in().readObject();
                 switch (inputMessage.getType()) {
                     case READ_FROM_CLIENT:
-                        //TODO: Return the correct value to the client
+                        client.out().writeObject(readFromClient(inputMessage.getResource()));
+                        client.close();
+                        break;
                     case WRITE_FROM_CLIENT:
-                        //TODO: Write the value and send an update to the other replicas
+                        writeFromClient(inputMessage.getResource(), inputMessage.getValue());
                         break;
                     case UPDATE_FROM_REPLICA:
-                        //TODO: Do the update
+                        updateFromReplica();
                         break;
                     case GET_STATE:
-                        //TODO: Send the state to the replica
+                        getReplicaState();
                         break;
                     case SEND_NEW_REPLICA:
-                        //TODO: Add the new replica to the state
+                        sendNewReplica();
                         break;
                     case REMOVE_OLD_REPLICA:
-                        //TODO: Remove the replica from the state
+                        removeOldReplica();
                         break;
                     default:
                         logger.log(Level.WARNING, "Message type not found.");
@@ -147,6 +172,46 @@ public class Replica {
             } catch (IOException | ClassNotFoundException e) {
                 logger.log(Level.WARNING, "Communication with a replica interrupted.");
             }
+        }
+
+        private Message readFromClient(String resource) {
+            return new Message(MessageType.READ_ANSWER, resource, state.read(resource));
+        }
+
+        private void writeFromClient(String resource, String value) {
+            state.clientWrite(replicaAddress, resource, value);
+            for (Address address : otherReplicaAddresses) {
+                Replica.addMessageToBeSent();
+                Thread writeSender = new Thread(() -> runWriteSender(address, new Update(state.getState().getVectorClock(), replicaAddress, resource, value)));
+                writeSender.start();
+            }
+        }
+
+        private void runWriteSender(Address otherReplica, Update update) {
+            try {
+                TCPClient replica = TCPClient.connect(otherReplica);
+                replica.out().writeObject(new Message(MessageType.UPDATE_FROM_REPLICA, update));
+                Replica.removeMessageToBeSent();
+                replica.close();
+            } catch (IOException e) {
+                logger.log(Level.SEVERE, () -> "Could not update replica " + otherReplica + " properly.");
+            }
+        }
+
+        private void updateFromReplica() {
+            //TODO
+        }
+
+        private void getReplicaState() {
+            //TODO
+        }
+
+        private void sendNewReplica() {
+            //TODO
+        }
+
+        private void removeOldReplica() {
+            //TODO
         }
     }
 }

@@ -32,6 +32,7 @@ public class Tracker {
         }
         while (getChoice() != 1);
         tracker.interrupt();
+        logger.log(Level.INFO, "The tracker is now closed.");
     }
 
     private static int getChoice() {
@@ -59,7 +60,7 @@ public class Tracker {
         try {
             serverSocket.close();
         } catch (IOException e) {
-            logger.log(Level.WARNING, "Could not close tracker properly.");
+            logger.log(Level.SEVERE, "Could not close tracker properly.");
         }
     }
 

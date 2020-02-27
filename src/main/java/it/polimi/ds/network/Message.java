@@ -73,8 +73,8 @@ public class Message implements Serializable {
     }
 
     public Message(MessageType type, Update update) {
-        if(!type.hasPayload().equals(MessageType.TRACKER_INDEX))
-            throw new RuntimeException("This type of message shouldn't have a tracker index");
+        if(!type.hasPayload().equals(MessageType.UPDATE))
+            throw new RuntimeException("This type of message shouldn't have an update");
         this.type = type;
         this.update = update;
     }

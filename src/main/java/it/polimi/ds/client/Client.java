@@ -21,6 +21,7 @@ public class Client {
         Client client = new Client(args[0], args[1]);
         while(!done)
             client.start();
+        logger.log(Level.INFO,"This client is now closed.");
     }
 
     public Client(String serverIP, String serverPort) {
@@ -37,7 +38,7 @@ public class Client {
             serverSocket.close();
             logger.log(Level.INFO, () -> "Connected to server: " + serverAddress.toString());
         } catch (IOException | ClassNotFoundException e) {
-            logger.log(Level.WARNING, "Impossible to reach the server, exiting.");
+            logger.log(Level.SEVERE, "Impossible to reach the server, exiting.");
             return;
         }
 
@@ -70,7 +71,6 @@ public class Client {
                         serverSocket.out().writeObject(new Message(MessageType.REMOVE_CLIENT, replicaAddress));
                         serverSocket.close();
                         setDone();
-                        logger.log(Level.INFO,"Exiting client.");
                         return;
                     // Every other expression is ignored
                     default:
@@ -80,7 +80,7 @@ public class Client {
         } catch (IOException e) {
             logger.log(Level.WARNING, "The current replica is no longer available, try again in order to connect to another replica.");
         } catch (ClassNotFoundException e) {
-            logger.log(Level.WARNING, e.getMessage());
+            logger.log(Level.WARNING, "Could not parse correctly the message, please try again.");
         }
     }
 
