@@ -1,15 +1,17 @@
 package it.polimi.ds.replica;
 
-import java.util.PriorityQueue;
-import java.util.Queue;
+import java.util.HashSet;
+import java.util.Set;
 
 public class TrackerIndexHandler {
-    private Queue<TrackerUpdate> updateFromTrackerQueue;
+    private Set<TrackerUpdate> updateFromTrackerQueue;
+    private Set<Update> updateToBeSendQueue;
     private int trackerIndex;
 
     public TrackerIndexHandler(int trackerIndex) {
         this.trackerIndex = trackerIndex;
-        this.updateFromTrackerQueue = new PriorityQueue<>();
+        this.updateFromTrackerQueue = new HashSet<>();
+        this.updateToBeSendQueue = new HashSet<>();
     }
 
     public synchronized int getTrackerIndex() {
@@ -25,7 +27,7 @@ public class TrackerIndexHandler {
             else if (trackerUpdate.getType().equals(TrackerUpdate.EXIT))
                 state.removeAddressKey(trackerUpdate.getAddress());
             trackerIndex++;
-//            run the queues
+    //            run the queues
 
         }
     }
@@ -43,6 +45,23 @@ public class TrackerIndexHandler {
         state.replicaWrite(update, incomingTrackerIndex == this.trackerIndex);
         return true;
 
+    }
+
+    /**
+     *
+     * @param update
+     * @param incomingTrackerIndex
+     * @return true if you can resend the update
+     */
+    public synchronized boolean addToQueueOrRetryWrite(Update update, int incomingTrackerIndex) {
+        if (this.trackerIndex > incomingTrackerIndex)
+            return true;
+        updateToBeSendQueue.add(update);
+        return false;
+    }
+
+    public boolean isOutgoingQueueEmpty(){
+        return updateToBeSendQueue.isEmpty();
     }
 
 }

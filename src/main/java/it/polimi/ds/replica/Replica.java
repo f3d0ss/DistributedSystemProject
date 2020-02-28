@@ -61,7 +61,7 @@ public class Replica {
         }
         while (getChoice() != 1);
         logger.log(Level.INFO, "Waiting until all messages are sent...");
-        while (messagesLeftToSend.get() != 0) {
+        while (messagesLeftToSend.get() != 0 || !trackerIndexHandler.isOutgoingQueueEmpty()) { // TODO: to be changed, after the check another thread can increase messageLeftToSend
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
@@ -196,7 +196,6 @@ public class Replica {
             we don't care, because if it was updated by an Exit from another replica it'ok if we don't send the update to the exited replica (would be check later otherwise)
             if it was updated by a Join we will simply send the update to the new replica who will reply with `wait` causing the resend of the message, no biggy
  */
-
             for (Address address : otherReplicaAddresses) {
                 Replica.addMessageToBeSent();
                 Thread writeSender = new Thread(() -> runWriteSender(address, update, otherReplicaAddresses, trackerIndex));
@@ -217,10 +216,15 @@ public class Replica {
                 /* TODO: need to check if reply with `wait` (my trackerIndex is less then the receiver) and if so put the message in a queue.
                          The queue need to listen on trackerIndex update, when trackerIndex is updated (incremented) try resend the message to all otherReplica */
                 Message reply = (Message) replica.in().readObject();
-//                if (reply.getType() == MessageType.WAIT) {
-//                    trackerIndexHandler.checkIfTrackerIndexIncreasedAndIfNotAddToQueue(update, trackerIndex);
-//                    // this method check if trackerIndex has increased during the communication, if so resend the Update with trackerIndex increased by 1, otherwise put the update in a queue
-//                }
+                if (reply.getType() == MessageType.WAIT) {
+                    if (trackerIndexHandler.addToQueueOrRetryWrite(update, trackerIndex)){
+                        for (Address address : otherReplicaAddresses) {
+                            Replica.addMessageToBeSent();
+                            Thread writeSender = new Thread(() -> runWriteSender(address, update, otherReplicaAddresses, trackerIndex + 1));
+                            writeSender.start();
+                        }
+                    }
+                }
                 // otherwise the reply should be an ACK and nothing need to be done
                 replica.close();
                 Replica.removeMessageToBeSent();
