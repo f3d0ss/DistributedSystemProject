@@ -20,7 +20,7 @@ public class Replica {
     private List<Address> otherReplicaAddresses;
     private StateHandler state;
     private ServerSocket serverSocket;
-    private static int trackerIndex;     //need to be shared
+    private TrackerIndexHandler trackerIndexHandler;     //need to be shared
     private static AtomicInteger messagesLeftToSend = new AtomicInteger(0);
     private static final Logger logger = Logger.getLogger("Replica");
 
@@ -30,12 +30,11 @@ public class Replica {
     }
 
     public void start(String trackerIp, String trackerPort, String replicaIp, String replicaPort) {
-        int trackerIndex = 0;
         this.trackerAddress = new Address(trackerIp, Integer.valueOf(trackerPort));
         this.replicaAddress = new Address(replicaIp, Integer.valueOf(replicaPort));
-        while (trackerIndex == 0){
+        while (trackerIndexHandler == null){
             try {
-                trackerIndex = joinNetwork(TCPClient.connect(trackerAddress));
+                trackerIndexHandler = joinNetwork(TCPClient.connect(trackerAddress));
             } catch (IOException | ClassNotFoundException e) {
                 logger.log(Level.SEVERE, "Impossible to contact the server, exiting.");
             }
@@ -48,7 +47,7 @@ public class Replica {
         for (int i = 0; state == null ; i++) {
             Address otherReplica = otherReplicaAddresses.get(i % otherReplicaAddresses.size());
             try {
-                state = getState(TCPClient.connect(otherReplica), trackerIndex);
+                state = getState(TCPClient.connect(otherReplica), trackerIndexHandler.getTrackerIndex());
             } catch (IOException | ClassNotFoundException e) {
                 logger.log(Level.WARNING, () -> "Impossible to get a valid state from " + otherReplicaAddresses + ", trying an other one.");
             }
@@ -94,7 +93,7 @@ public class Replica {
         try {
             serverSocket = new ServerSocket(Integer.parseInt(replicaPort));
             while (true) {
-                new IncomingMessageHandler(replicaAddress, otherReplicaAddresses, serverSocket.accept(), state).start();
+                new IncomingMessageHandler(replicaAddress, otherReplicaAddresses, serverSocket.accept(), state, trackerIndexHandler).start();
             }
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Could not accept the request.");
@@ -110,10 +109,10 @@ public class Replica {
         }
     }
 
-    private int joinNetwork(TCPClient client) throws IOException, ClassNotFoundException {
+    private TrackerIndexHandler joinNetwork(TCPClient client) throws IOException, ClassNotFoundException {
         client.out().writeObject(new Message(MessageType.ADD_REPLICA, replicaAddress));
         otherReplicaAddresses = ((Message) client.in().readObject()).getAddressSet();
-        return ((Message) client.in().readObject()).getTrackerIndex();
+        return new TrackerIndexHandler(((Message) client.in().readObject()).getTrackerIndex());
     }
 
     private StateHandler getState(TCPClient client, int trackerIndex) throws IOException, ClassNotFoundException {
@@ -137,13 +136,15 @@ public class Replica {
         private List<Address> otherReplicaAddresses;
         private Socket clientSocket;
         private StateHandler state;
+        private TrackerIndexHandler trackerIndexHandler;
 
-        public IncomingMessageHandler(Address replicaAddress, List<Address> otherReplicaAddresses, Socket socket, StateHandler state) {
+        public IncomingMessageHandler(Address replicaAddress, List<Address> otherReplicaAddresses, Socket socket, StateHandler state, TrackerIndexHandler trackerIndexHandler) {
             this.replicaAddress = replicaAddress;
             this.otherReplicaAddresses = new ArrayList<>(otherReplicaAddresses);
             this.clientSocket = socket;
             this.state = state;
             this.otherReplicaAddresses = otherReplicaAddresses;
+            this.trackerIndexHandler = trackerIndexHandler;
         }
 
         @Override
@@ -159,7 +160,10 @@ public class Replica {
                         writeFromClient(inputMessage.getResource(), inputMessage.getValue());
                         break;
                     case UPDATE_FROM_REPLICA:
-                        updateFromReplica();
+                        if (updateFromReplica(inputMessage.getUpdate(), inputMessage.getTrackerIndex()))
+                            client.out().writeObject(new Message(MessageType.ACK));
+                        else
+                            client.out().writeObject(new Message(MessageType.WAIT));
                         break;
                     case GET_STATE:
                         getReplicaState();
@@ -187,7 +191,7 @@ public class Replica {
         private void writeFromClient(String resource, String value) {
             Update update = state.clientWrite(resource, value);
             // TODO: GET indexTracker (because not send to new replicas)
-            int trackerIndex = Replica.trackerIndex;
+            int trackerIndex = trackerIndexHandler.getTrackerIndex();
 /*          here after reading the trackerIndex a thread could increment it and update the otherReplicaAddress,
             we don't care, because if it was updated by an Exit from another replica it'ok if we don't send the update to the exited replica (would be check later otherwise)
             if it was updated by a Join we will simply send the update to the new replica who will reply with `wait` causing the resend of the message, no biggy
@@ -212,24 +216,38 @@ public class Replica {
                 replica.out().writeObject(new Message(MessageType.UPDATE_FROM_REPLICA, update, trackerIndex));
                 /* TODO: need to check if reply with `wait` (my trackerIndex is less then the receiver) and if so put the message in a queue.
                          The queue need to listen on trackerIndex update, when trackerIndex is updated (incremented) try resend the message to all otherReplica */
+                Message reply = (Message) replica.in().readObject();
+//                if (reply.getType() == MessageType.WAIT) {
+//                    trackerIndexHandler.checkIfTrackerIndexIncreasedAndIfNotAddToQueue(update, trackerIndex);
+//                    // this method check if trackerIndex has increased during the communication, if so resend the Update with trackerIndex increased by 1, otherwise put the update in a queue
+//                }
+                // otherwise the reply should be an ACK and nothing need to be done
                 replica.close();
-            } catch (IOException e) {
+                Replica.removeMessageToBeSent();
+            } catch (IOException | ClassNotFoundException e) {
                 logger.log(Level.SEVERE, () -> "Could not update replica " + otherReplica + " properly.");
                 if (activeReplicas.contains(otherReplica))
                     runWriteSender(otherReplica, update, activeReplicas, trackerIndex);
             }
-            Replica.removeMessageToBeSent();
         }
 
-        private void updateFromReplica() {
+        /**
+         *
+         * @param update
+         * @param incomingTrackerIndex
+         * @return true if updateTaken, false otherwise
+         */
+        private boolean updateFromReplica(Update update, int incomingTrackerIndex) {
             /* TODO: Check the incoming trackerInsex ITI, if:
                 ITI > my trackerIndex MTI then put the message in `updates from replicas waiting for T` queue
                             (maybe could be processed thanks to assumption `before exit finish propagate update`, TOTHINK)
+                            no, because if myVectorClock not contain X I don't know
                 ITI < MTI then reply with `wait` message
                 ITI = MTI then process then execute state.replicaWrite
                 NOTE: check ITI = MTI and execute state.replicaWrite should be atomic, otherwise after the check and before the replicaWrite
                 the replica could receive a Join from the Tracker and give his state to the neo joined Replica
                 and then process the update without replying with `wait`*/
+            return trackerIndexHandler.checkTrackerIndexAndExecuteUpdate(update, incomingTrackerIndex, state);
         }
 
         private void getReplicaState() {
@@ -242,6 +260,7 @@ public class Replica {
         }
 
         private void addNewReplica() {
+            //Use trackerIndexHandler.executeTrackerUpdate
             /* TODO: Check the incoming trackerInsex ITI, if:
                 ITI > my trackerIndex MTI + 1 then put the message in `updates from tracker waiting for T` queue
                 ITI < MTI + 1 message already received, ignore
@@ -250,6 +269,7 @@ public class Replica {
         }
 
         private void removeOldReplica() {
+            //Use trackerIndexHandler.executeTrackerUpdate
             /* TODO: Check the incoming trackerInsex ITI, if:
                 ITI > my trackerIndex MTI + 1 then put the message in `updates from tracker waiting for T` queue
                 ITI < MTI + 1 message already received, ignore

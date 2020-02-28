@@ -64,7 +64,7 @@ public enum MessageType {
     READ_ANSWER {
         @Override
         public String hasPayload() {
-            return MessageType.WRITE;
+            return KEY_VALUE;
         }
     },
     GET_STATE{
@@ -96,6 +96,18 @@ public enum MessageType {
         @Override
         public String hasPayload() {
             return KEY_VALUE;
+        }
+    },
+    WAIT {
+        @Override
+        public String hasPayload() {
+            return null;
+        }
+    },
+    ACK {
+        @Override
+        public String hasPayload() {
+            return null;
         }
     };
 

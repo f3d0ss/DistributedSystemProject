@@ -34,6 +34,6 @@ public class State implements Serializable {
     }
 
     public void addKey(String key) {
-        vectorClock.put(key, 0);
+        vectorClock.putIfAbsent(key, 0);
     }
 }
