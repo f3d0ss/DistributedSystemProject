@@ -6,11 +6,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class Storage extends ReentrantLock {
     private Map<String, Integer> replicas;
-    private Integer trackerIndex = 0;
+    private AtomicInteger trackerIndex = new AtomicInteger(0);
 
     public Storage() {
         this.replicas = new HashMap<>();
@@ -49,6 +50,6 @@ public class Storage extends ReentrantLock {
     }
 
     public int incrementAndGetTrackerIndex() {
-        return trackerIndex++;
+        return trackerIndex.incrementAndGet();
     }
 }
