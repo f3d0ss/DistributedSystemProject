@@ -12,6 +12,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -24,6 +25,7 @@ public class Replica {
     private ServerSocket serverSocket;
     private TrackerIndexHandler trackerIndexHandler;     //need to be shared
     private static AtomicInteger messagesLeftToSend = new AtomicInteger(0);
+    private static AtomicBoolean isReplicaClosing = new AtomicBoolean(false);
     private static final Logger logger = Logger.getLogger("Replica");
 
     public static void main(String[] args) {
@@ -72,7 +74,7 @@ public class Replica {
         }
         while (getChoice() != 1);
         logger.log(Level.INFO, "Waiting until all messages are sent...");
-        stop(); // This ensures that the replica can no longer accept incoming requests from clients
+        Replica.setIsReplicaClosing(); // This ensures that the replica can no longer accept incoming requests from clients
         while (messagesLeftToSend.get() != 0 || !trackerIndexHandler.isOutgoingQueueEmpty()) {
             try {
                 Thread.sleep(100);
@@ -144,6 +146,14 @@ public class Replica {
         messagesLeftToSend.decrementAndGet();
     }
 
+    public static boolean isReplicaClosing() {
+        return isReplicaClosing.get();
+    }
+
+    public static void setIsReplicaClosing() {
+        Replica.isReplicaClosing.set(true);
+    }
+
     private static class IncomingMessageHandler extends Thread {
         private List<Address> otherReplicaAddresses;
         private Socket clientSocket;
@@ -168,7 +178,8 @@ public class Replica {
                         client.out().writeObject(readFromClient(inputMessage.getResource()));
                         break;
                     case WRITE_FROM_CLIENT:
-                        writeFromClient(inputMessage.getResource(), inputMessage.getValue());
+                        if(!Replica.isReplicaClosing())
+                            writeFromClient(inputMessage.getResource(), inputMessage.getValue());
                         break;
                     case UPDATE_FROM_REPLICA:
                         if (updateFromReplica(inputMessage.getUpdate(), inputMessage.getTrackerIndex()))

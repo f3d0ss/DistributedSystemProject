@@ -54,7 +54,7 @@ public class Client {
                     case "read":
                         replicaSocket = TCPClient.connect(replicaAddress);
                         replicaSocket.out().writeObject(new Message(MessageType.READ_FROM_CLIENT, splittedString[1]));
-                        inputMessage = (Message) serverSocket.in().readObject();
+                        inputMessage = (Message) replicaSocket.in().readObject();
                         System.out.println("Resource " + inputMessage.getResource() + " has value " + inputMessage.getValue() + ".");
                         replicaSocket.close();
                         break;
