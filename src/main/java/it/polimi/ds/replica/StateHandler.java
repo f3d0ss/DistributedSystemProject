@@ -3,8 +3,6 @@ package it.polimi.ds.replica;
 import it.polimi.ds.network.Address;
 
 import java.util.Map;
-import java.util.PriorityQueue;
-import java.util.Queue;
 
 // This class exist to synchronize the access to the State (TODO)
 public class StateHandler {
@@ -13,13 +11,12 @@ public class StateHandler {
     public static final int ACCEPT = 1;
 
     private State state;
-    private Queue<UpdateWithTracker> queue;
+
     private Address replicaAddress;
 
     public StateHandler(State state, Address replicaAddress) {
         this.state = state;
         this.replicaAddress = replicaAddress;
-        this.queue = new PriorityQueue<>();
     }
 
     public State getState() {
@@ -57,16 +54,16 @@ public class StateHandler {
             state.write(myVector, update.getKey(), update.getValue());
             checkUpdateQueue();
         }else if(check == ADD_TO_QUEUE) {
-            queue.add(new UpdateWithTracker(update, sameTrackerIndex));
+            state.getQueue().add(new UpdateWithTracker(update, sameTrackerIndex));
         }
     }
 
     private void checkUpdateQueue(){
         Map<String, Integer> myVector = state.getVectorClock();
-        for (UpdateWithTracker updateWithTracker: queue){
+        for (UpdateWithTracker updateWithTracker: state.getQueue()){
             Update update = updateWithTracker.getUpdate();
             if (vectorCheck(myVector, update.getVectorClock(), update.getFrom(), updateWithTracker.isSameTrackerIndex()) == ACCEPT){
-                queue.remove(updateWithTracker);
+                state.getQueue().remove(updateWithTracker);
                 myVector.put(update.getFrom().toString(), myVector.get(update.getFrom().toString()) + 1); // myVector[from] ++
                 state.write(myVector, update.getKey(), update.getValue());
                 checkUpdateQueue();
@@ -96,24 +93,6 @@ public class StateHandler {
             }
         }
         return ACCEPT;
-    }
-
-    private class UpdateWithTracker{
-        private Update update;
-        private boolean sameTrackerIndex;
-
-        public UpdateWithTracker(Update update, boolean sameTrackerIndex) {
-            this.update = update;
-            this.sameTrackerIndex = sameTrackerIndex;
-        }
-
-        public Update getUpdate() {
-            return update;
-        }
-
-        public boolean isSameTrackerIndex() {
-            return sameTrackerIndex;
-        }
     }
 
 }
