@@ -8,8 +8,10 @@ import it.polimi.ds.network.TCPClient;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -30,12 +32,16 @@ public class Replica {
 
     public static void main(String[] args) {
         Replica tracker = new Replica();
-        tracker.start(args[0], args[1], args[2], args[3]);
+        tracker.start(args[0], args[1], args[2]);
     }
 
-    public void start(String trackerIp, String trackerPort, String replicaIp, String replicaPort) {
-        this.trackerAddress = new Address(trackerIp, Integer.valueOf(trackerPort));
-        this.replicaAddress = new Address(replicaIp, Integer.valueOf(replicaPort));
+    public void start(String trackerIp, String trackerPort, String replicaPort) {
+        try {
+            this.trackerAddress = new Address(trackerIp, Integer.valueOf(trackerPort));
+            this.replicaAddress = new Address(InetAddress.getLocalHost().getHostAddress(), Integer.valueOf(replicaPort));
+        } catch (UnknownHostException e) {
+            logger.log(Level.SEVERE, "Could not start replica.");
+        }
         while (trackerIndexHandler == null){
             try {
                 trackerIndexHandler = joinNetwork(TCPClient.connect(trackerAddress));
@@ -218,6 +224,7 @@ public class Replica {
 
         private void writeFromClient(String resource, String value) {
             Update update = state.clientWrite(resource, value);
+            logger.log(Level.INFO, () -> "Successfully wrote resource " + resource + " with value " + value);
             // TODO: GET indexTracker (because not send to new replicas)
             int trackerIndex = trackerIndexHandler.getTrackerIndex();
 /*          here after reading the trackerIndex a thread could increment it and update the otherReplicaAddress,

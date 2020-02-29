@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
 public class TrackerTest {
-    public static final int PORT = 2222;
+    public static final int PORT = 4321;
     private static Thread tracker;
     private TCPClient client;
 
