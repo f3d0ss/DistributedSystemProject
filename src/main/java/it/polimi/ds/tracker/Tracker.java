@@ -139,7 +139,7 @@ public class Tracker {
                     currentOtherReplica.close();
                     return;
                 } catch (IOException e) {
-                    logger.log(Level.WARNING, "Communication with replica " + to + " interrupted, retrying.");
+                    logger.log(Level.WARNING, Thread.currentThread().toString() + ": Communication with replica " + to + " interrupted, retrying.");
                     try {
                         Thread.sleep(1000);
                     } catch (InterruptedException ex) {

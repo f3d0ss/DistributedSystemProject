@@ -124,8 +124,6 @@ public class Replica {
     private TrackerIndexHandler joinNetwork(TCPClient client) throws IOException, ClassNotFoundException {
         client.out().writeObject(new Message(MessageType.ADD_REPLICA, replicaAddress));
         Message reply = (Message) client.in().readObject();
-        if (reply.getType() != MessageType.SEND_STATE)
-            return null;
         otherReplicaAddresses = reply.getAddressSet();
         return new TrackerIndexHandler(reply.getTrackerIndex());
     }
