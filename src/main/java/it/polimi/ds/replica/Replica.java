@@ -103,7 +103,7 @@ public class Replica {
         try {
             serverSocket = new ServerSocket(Integer.parseInt(replicaPort));
             while (true) {
-                new IncomingMessageHandler(replicaAddress, otherReplicaAddresses, serverSocket.accept(), state, trackerIndexHandler).start();
+                new IncomingMessageHandler(otherReplicaAddresses, serverSocket.accept(), state, trackerIndexHandler).start();
             }
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Could not accept the request.");
@@ -143,14 +143,12 @@ public class Replica {
     }
 
     private static class IncomingMessageHandler extends Thread {
-        private Address replicaAddress;
         private List<Address> otherReplicaAddresses;
         private Socket clientSocket;
         private StateHandler state;
         private TrackerIndexHandler trackerIndexHandler;
 
-        public IncomingMessageHandler(Address replicaAddress, List<Address> otherReplicaAddresses, Socket socket, StateHandler state, TrackerIndexHandler trackerIndexHandler) {
-            this.replicaAddress = replicaAddress;
+        public IncomingMessageHandler(List<Address> otherReplicaAddresses, Socket socket, StateHandler state, TrackerIndexHandler trackerIndexHandler) {
             this.otherReplicaAddresses = new ArrayList<>(otherReplicaAddresses);
             this.clientSocket = socket;
             this.state = state;
@@ -211,42 +209,11 @@ public class Replica {
  */
             for (Address address : otherReplicaAddresses) {
                 Replica.addMessageToBeSent();
-                Thread writeSender = new Thread(() -> runWriteSender(address, update, otherReplicaAddresses, trackerIndex));
+                Thread writeSender = new WriteSender(address, update, otherReplicaAddresses, trackerIndex, trackerIndexHandler);
                 writeSender.start();
             }
         }
 
-        /**
-         * This method continuously try to connect to otherReplica to send the update if otherReplica is still in the list of active replicas (activeReplicas)
-         * @param otherReplica this is the
-         * @param update this is the update to be sent
-         * @param activeReplicas this is used to check other replica is removed from the list of activeReplica
-         */
-        private void runWriteSender(Address otherReplica, Update update, List<Address> activeReplicas, int trackerIndex) {
-            try {
-                TCPClient replica = TCPClient.connect(otherReplica);
-                replica.out().writeObject(new Message(MessageType.UPDATE_FROM_REPLICA, update, trackerIndex));
-                /* TODO: need to check if reply with `wait` (my trackerIndex is less then the receiver) and if so put the message in a queue.
-                         The queue need to listen on trackerIndex update, when trackerIndex is updated (incremented) try resend the message to all otherReplica */
-                Message reply = (Message) replica.in().readObject();
-                if (reply.getType() == MessageType.WAIT) {
-                    if (trackerIndexHandler.addToQueueOrRetryWrite(update, trackerIndex)){
-                        for (Address address : otherReplicaAddresses) {
-                            Replica.addMessageToBeSent();
-                            Thread writeSender = new Thread(() -> runWriteSender(address, update, otherReplicaAddresses, trackerIndex + 1));
-                            writeSender.start();
-                        }
-                    }
-                }
-                // otherwise the reply should be an ACK and nothing need to be done
-                replica.close();
-                Replica.removeMessageToBeSent();
-            } catch (IOException | ClassNotFoundException e) {
-                logger.log(Level.SEVERE, () -> "Could not update replica " + otherReplica + " properly.");
-                if (activeReplicas.contains(otherReplica))
-                    runWriteSender(otherReplica, update, activeReplicas, trackerIndex);
-            }
-        }
 
         /**
          *

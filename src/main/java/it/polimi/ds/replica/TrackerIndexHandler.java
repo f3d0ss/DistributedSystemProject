@@ -1,6 +1,9 @@
 package it.polimi.ds.replica;
 
+import it.polimi.ds.network.Address;
+
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class TrackerIndexHandler {
@@ -18,7 +21,7 @@ public class TrackerIndexHandler {
         return trackerIndex;
     }
 
-    public synchronized void executeTrackerUpdate(TrackerUpdate trackerUpdate, StateHandler state) {
+    public synchronized void executeTrackerUpdate(TrackerUpdate trackerUpdate, StateHandler state, List<Address> activeReplicas) {
         if (trackerUpdate.getTrackerIndex() > this.trackerIndex + 1){
             updateFromTrackerQueue.add(trackerUpdate);
         }else if (trackerUpdate.getTrackerIndex() == this.trackerIndex + 1) {
@@ -27,8 +30,18 @@ public class TrackerIndexHandler {
             else if (trackerUpdate.getType().equals(TrackerUpdate.EXIT))
                 state.removeAddressKey(trackerUpdate.getAddress());
             trackerIndex++;
-    //            run the queues
-
+            for (Update update : updateToBeSendQueue){
+                updateToBeSendQueue.remove(update);
+                for (Address replica : activeReplicas){
+                    Replica.addMessageToBeSent();
+                    Thread writeSender = new WriteSender(replica, update, activeReplicas, trackerIndex, this);
+                    writeSender.start();
+                }
+            }
+            for (TrackerUpdate queuedTrackerUpdate : updateFromTrackerQueue){
+                updateFromTrackerQueue.remove(queuedTrackerUpdate);
+                executeTrackerUpdate(queuedTrackerUpdate, state, activeReplicas);
+            }
         }
     }
 
@@ -48,7 +61,7 @@ public class TrackerIndexHandler {
     }
 
     /**
-     *
+     * Methods called if `wait` is received
      * @param update
      * @param incomingTrackerIndex
      * @return true if you can resend the update
@@ -60,7 +73,7 @@ public class TrackerIndexHandler {
         return false;
     }
 
-    public boolean isOutgoingQueueEmpty(){
+    public synchronized boolean isOutgoingQueueEmpty(){
         return updateToBeSendQueue.isEmpty();
     }
 

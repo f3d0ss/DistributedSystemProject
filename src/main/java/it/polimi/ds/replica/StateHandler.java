@@ -3,6 +3,7 @@ package it.polimi.ds.replica;
 import it.polimi.ds.network.Address;
 
 import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.Queue;
 
 // This class exist to synchronize the access to the State (TODO)
@@ -18,6 +19,7 @@ public class StateHandler {
     public StateHandler(State state, Address replicaAddress) {
         this.state = state;
         this.replicaAddress = replicaAddress;
+        this.queue = new PriorityQueue<>();
     }
 
     public State getState() {
