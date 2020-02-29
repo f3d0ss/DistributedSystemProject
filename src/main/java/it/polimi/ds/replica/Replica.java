@@ -5,7 +5,9 @@ import it.polimi.ds.network.Message;
 import it.polimi.ds.network.MessageType;
 import it.polimi.ds.network.TCPClient;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -50,7 +52,7 @@ public class Replica {
         logger.log(Level.INFO, "Connected to the tracker successfully.");
 //        Try to get the state from one of the replicas
         if (otherReplicaAddresses.isEmpty()){
-            state = new StateHandler(new State(replicaAddress), replicaAddress);
+            state = new StateHandler(new ReplicaState(replicaAddress), replicaAddress);
         }
 
         for (int i = 0; state == null ; i++) {
@@ -122,6 +124,8 @@ public class Replica {
     private TrackerIndexHandler joinNetwork(TCPClient client) throws IOException, ClassNotFoundException {
         client.out().writeObject(new Message(MessageType.ADD_REPLICA, replicaAddress));
         Message reply = (Message) client.in().readObject();
+        if (reply.getType() != MessageType.SEND_STATE)
+            return null;
         otherReplicaAddresses = reply.getAddressSet();
         return new TrackerIndexHandler(reply.getTrackerIndex());
     }
@@ -175,13 +179,17 @@ public class Replica {
                             client.out().writeObject(new Message(MessageType.WAIT));
                         break;
                     case GET_STATE:
-                        getReplicaState();
+                        ReplicaState outgoingState = getReplicaState(inputMessage.getTrackerIndex(), state);
+                        if (outgoingState == null)
+                            client.out().writeObject(new Message(MessageType.NOT_STATE));
+                        else
+                            client.out().writeObject(new Message(MessageType.SEND_STATE, outgoingState));
                         break;
                     case SEND_NEW_REPLICA:
-                        addNewReplica();
+                        addNewReplica(inputMessage.getAddress(), inputMessage.getTrackerIndex(), state, otherReplicaAddresses);
                         break;
                     case REMOVE_OLD_REPLICA:
-                        removeOldReplica();
+                        removeOldReplica(inputMessage.getAddress(), inputMessage.getTrackerIndex(), state, otherReplicaAddresses);
                         break;
                     default:
                         logger.log(Level.WARNING, "Message type not found.");
@@ -222,7 +230,7 @@ public class Replica {
          * @return true if updateTaken, false otherwise
          */
         private boolean updateFromReplica(Update update, int incomingTrackerIndex) {
-            /* TODO: Check the incoming trackerInsex ITI, if:
+            /* TODO: Check the incoming trackerIndex ITI, if:
                 ITI > my trackerIndex MTI then put the message in `updates from replicas waiting for T` queue
                             (maybe could be processed thanks to assumption `before exit finish propagate update`, TOTHINK)
                             no, because if myVectorClock not contain X I don't know
@@ -234,31 +242,35 @@ public class Replica {
             return trackerIndexHandler.checkTrackerIndexAndExecuteUpdate(update, incomingTrackerIndex, state);
         }
 
-        private void getReplicaState() {
-            /* TODO: Check the incoming trackerInsex ITI, if:
-                ITI > my trackerIndex MTI reply with `I do not know u yet`
-                ITI < MTI then should be ok to send the state otherwise (reply with `wait` message)
+        private ReplicaState getReplicaState(int incomingTrackerIndex, StateHandler state) {
+            /* TODO: Check the incoming trackerIndex ITI, if:
+                ITI > my trackerIndex MTI reply with `NOT_STATE`
+                ITI < MTI then should be ok to send the state
                 ITI = MTI Send the whole state to the requesting replica.
                 Note: send state and queue
                 */
+            return trackerIndexHandler.checkTrackerIndexAndGetState(incomingTrackerIndex, state);
+            
         }
 
-        private void addNewReplica() {
+        private void addNewReplica(Address address, int trackerIndex, StateHandler state, List<Address> activeReplicas) {
             //Use trackerIndexHandler.executeTrackerUpdate
-            /* TODO: Check the incoming trackerInsex ITI, if:
+            /* TODO: Check the incoming trackerIndex ITI, if:
                 ITI > my trackerIndex MTI + 1 then put the message in `updates from tracker waiting for T` queue
                 ITI < MTI + 1 message already received, ignore
                 ITI = MTI + 1 then add the Replica to the VClock and update MTI
                 Note: the update of the MTI should cause the checking of the `updates from tracker waiting for T` and  `updates from replicas waiting for T` queues */
+            trackerIndexHandler.executeTrackerUpdate(new TrackerUpdate(TrackerUpdate.JOIN, address, trackerIndex), state, activeReplicas);
         }
 
-        private void removeOldReplica() {
+        private void removeOldReplica(Address address, int trackerIndex, StateHandler state, List<Address> activeReplicas) {
             //Use trackerIndexHandler.executeTrackerUpdate
-            /* TODO: Check the incoming trackerInsex ITI, if:
+            /* TODO: Check the incoming trackerIndex ITI, if:
                 ITI > my trackerIndex MTI + 1 then put the message in `updates from tracker waiting for T` queue
                 ITI < MTI + 1 message already received, ignore
                 ITI = MTI + 1 then remove the Replica from the VClock and update MTI
                 Note: the update of the MTI should cause the checking of the `updates from tracker waiting for T` and  `updates from replicas waiting for T` queues */
+            trackerIndexHandler.executeTrackerUpdate(new TrackerUpdate(TrackerUpdate.EXIT, address, trackerIndex), state, activeReplicas);
         }
     }
 }

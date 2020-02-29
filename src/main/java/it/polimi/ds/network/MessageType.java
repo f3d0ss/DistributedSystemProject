@@ -76,7 +76,7 @@ public enum MessageType {
     SEND_STATE{
         @Override
         public String hasPayload() {
-            return KEY;
+            return STATE;
         }
 
     },
@@ -116,7 +116,7 @@ public enum MessageType {
     public static final String ADDRESS_SET_TRACKER_INDEX = "ADDRESS_SET_TRACKER_INDEX";
     public static final String READ = "READ";
     public static final String KEY_VALUE = "KEY_VALUE";
-    public static final String KEY = "KEY";
+    public static final String STATE = "STATE";
     public static final String UPDATE = "UPDATE";
     public static final String TRACKER_INDEX = "TRACKER_INDEX";
 

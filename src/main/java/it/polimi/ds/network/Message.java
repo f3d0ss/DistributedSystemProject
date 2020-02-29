@@ -1,6 +1,6 @@
 package it.polimi.ds.network;
 
-import it.polimi.ds.replica.State;
+import it.polimi.ds.replica.ReplicaState;
 import it.polimi.ds.replica.Update;
 
 import java.io.Serializable;
@@ -12,7 +12,7 @@ public class Message implements Serializable {
     private List<Address> addressSet;
     private String resource;
     private String value;
-    private State state;
+    private ReplicaState state;
     private Update update;
     private int trackerIndex;
 
@@ -58,8 +58,8 @@ public class Message implements Serializable {
         this.value = value;
     }
 
-    public Message(MessageType type, State state) {
-        if(!type.hasPayload().equals(MessageType.KEY))
+    public Message(MessageType type, ReplicaState state) {
+        if(!type.hasPayload().equals(MessageType.STATE))
             throw new RuntimeException("This type of message shouldn't have a state");
         this.type = type;
         this.state = state;
@@ -100,7 +100,7 @@ public class Message implements Serializable {
         return value;
     }
 
-    public State getState() {
+    public ReplicaState getState() {
         return state;
     }
 

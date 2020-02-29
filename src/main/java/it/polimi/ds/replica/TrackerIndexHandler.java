@@ -60,6 +60,12 @@ public class TrackerIndexHandler {
 
     }
 
+    public synchronized ReplicaState checkTrackerIndexAndGetState(int incomingTrackerIndex, StateHandler stateHandler){
+        if (incomingTrackerIndex > trackerIndex)
+            return null;
+        return stateHandler.getState();
+    }
+
     /**
      * Methods called if `wait` is received
      * @param update

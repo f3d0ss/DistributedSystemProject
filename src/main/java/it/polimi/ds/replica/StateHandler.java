@@ -10,20 +10,20 @@ public class StateHandler {
     public static final int ADD_TO_QUEUE = 0;
     public static final int ACCEPT = 1;
 
-    private State state;
+    private ReplicaState state;
 
     private Address replicaAddress;
 
-    public StateHandler(State state, Address replicaAddress) {
+    public StateHandler(ReplicaState state, Address replicaAddress) {
         this.state = state;
         this.replicaAddress = replicaAddress;
     }
 
-    public State getState() {
-        return state;
+    public ReplicaState getState() {
+        return new ReplicaState(state);
     }
 
-    public void setState(State state) {
+    public void setState(ReplicaState state) {
         this.state = state;
     }
 
