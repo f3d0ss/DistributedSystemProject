@@ -4,7 +4,7 @@ public enum MessageType {
     ADD_REPLICA{
         @Override
         public String hasPayload() {
-            return ADDRESS_TRACKER_INDEX;
+            return ADDRESS;
         }
     },
     ADD_CLIENT{

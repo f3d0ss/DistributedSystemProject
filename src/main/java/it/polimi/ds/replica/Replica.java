@@ -35,10 +35,19 @@ public class Replica {
         while (trackerIndexHandler == null){
             try {
                 trackerIndexHandler = joinNetwork(TCPClient.connect(trackerAddress));
-            } catch (IOException | ClassNotFoundException e) {
-                logger.log(Level.SEVERE, "Impossible to contact the server, exiting.");
+            } catch (IOException e) {
+                logger.log(Level.WARNING, "Impossible to contact the tracker, retrying.");
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                }
+            } catch (ClassNotFoundException e) {
+                logger.log(Level.SEVERE, "Could not read message properly.");
+                return;
             }
         }
+        logger.log(Level.INFO, "Connected to the tracker successfully.");
 //        Try to get the state from one of the replicas
         if (otherReplicaAddresses.isEmpty()){
             state = new StateHandler(new State(replicaAddress), replicaAddress);
@@ -57,11 +66,12 @@ public class Replica {
         Thread replica = new Thread(() -> runReplica(replicaPort));
         replica.start();
         do {
-            logger.log(Level.INFO, "Press 1 to close the Tracker");
+            logger.log(Level.INFO, "Press 1 to close the Replica");
         }
         while (getChoice() != 1);
         logger.log(Level.INFO, "Waiting until all messages are sent...");
-        while (messagesLeftToSend.get() != 0 || !trackerIndexHandler.isOutgoingQueueEmpty()) { // TODO: to be changed, after the check another thread can increase messageLeftToSend
+        stop(); // This ensures that the replica can no longer accept incoming requests from clients
+        while (messagesLeftToSend.get() != 0 || !trackerIndexHandler.isOutgoingQueueEmpty()) {
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
@@ -111,8 +121,9 @@ public class Replica {
 
     private TrackerIndexHandler joinNetwork(TCPClient client) throws IOException, ClassNotFoundException {
         client.out().writeObject(new Message(MessageType.ADD_REPLICA, replicaAddress));
-        otherReplicaAddresses = ((Message) client.in().readObject()).getAddressSet();
-        return new TrackerIndexHandler(((Message) client.in().readObject()).getTrackerIndex());
+        Message reply = (Message) client.in().readObject();
+        otherReplicaAddresses = reply.getAddressSet();
+        return new TrackerIndexHandler(reply.getTrackerIndex());
     }
 
     private StateHandler getState(TCPClient client, int trackerIndex) throws IOException, ClassNotFoundException {
@@ -179,8 +190,10 @@ public class Replica {
                 }
                 client.close();
                 clientSocket.close();
-            } catch (IOException | ClassNotFoundException e) {
+            } catch (IOException e) {
                 logger.log(Level.WARNING, "Communication with a replica interrupted.");
+            } catch (ClassNotFoundException e) {
+                logger.log(Level.SEVERE, "Could not read the message properly.");
             }
         }
 

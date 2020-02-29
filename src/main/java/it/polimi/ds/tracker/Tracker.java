@@ -113,8 +113,10 @@ public class Tracker {
                 }
                 replica.close();
                 clientSocket.close();
-            } catch (IOException | ClassNotFoundException e) {
+            } catch (IOException e) {
                 logger.log(Level.WARNING, "Communication with a replica interrupted.");
+            } catch (ClassNotFoundException e) {
+                logger.log(Level.SEVERE, "Could not read the message properly.");
             }
         }
     }
@@ -122,10 +124,12 @@ public class Tracker {
     private static class MessageSender extends Thread {
         private Message message;
         private Address to;
+        
         public MessageSender (Message message, Address to){
             this.message = message;
             this.to = to;
         }
+
         @Override
         public void run() {
             while (true){
@@ -135,7 +139,12 @@ public class Tracker {
                     currentOtherReplica.close();
                     return;
                 } catch (IOException e) {
-                    logger.log(Level.WARNING, "Communication with replica " + to + " interrupted. Retry soon.");
+                    logger.log(Level.WARNING, "Communication with replica " + to + " interrupted, retrying.");
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException ex) {
+                        Thread.currentThread().interrupt();
+                    }
                 }
             }
         }

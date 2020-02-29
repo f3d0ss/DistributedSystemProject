@@ -24,11 +24,11 @@ public class Client {
         logger.log(Level.INFO,"This client is now closed.");
     }
 
-    public Client(String serverIP, String serverPort) {
+    private Client(String serverIP, String serverPort) {
         this.serverAddress = new Address(serverIP, Integer.parseInt(serverPort));
     }
 
-    public void start() {
+    private void start() {
         TCPClient serverSocket;
         Message inputMessage;
         try {

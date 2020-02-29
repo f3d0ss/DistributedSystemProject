@@ -11,7 +11,7 @@ public class StorageTest {
     private Storage storage = new Storage();
 
     @Test
-    public void testAddReplica(){
+    public void testAddReplica() {
         for (int i = 0; i < 10; i++) {
             storage.addReplica(new Address("0.0.0." + i, i));
         }
