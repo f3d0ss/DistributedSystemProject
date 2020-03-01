@@ -23,6 +23,7 @@ public class Client {
 
     public static void main(String[] args) {
         Client client = new Client(args[0], args[1]);
+        welcomeMessage();
         while (!done)
             client.start();
         logger.log(Level.INFO, "This client is now closed.");
@@ -30,6 +31,13 @@ public class Client {
 
     private static void setDone() {
         done = true;
+    }
+
+    private static void welcomeMessage() {
+        logger.log(Level.INFO, "Usage:" +
+                "\nread <resource-name>             Displays value of the resource" +
+                "\nwrite <resource-name> <value>    Sets new value for the resource" +
+                "\nexit                             Terminates program");
     }
 
     private void start() {
@@ -42,7 +50,13 @@ public class Client {
             serverSocket.close();
             logger.log(Level.INFO, () -> "Connected to tracker server: " + serverAddress.toString());
         } catch (IOException | ClassNotFoundException e) {
-            logger.log(Level.SEVERE, "Impossible to reach the server, exiting.");
+            logger.log(Level.SEVERE, "Impossible to reach the tracker server: Enter exit to quit, Enter anything else to retry");
+            BufferedReader r = new BufferedReader(new InputStreamReader(System.in));
+            try {
+                if (r.readLine().equals("exit")) setDone();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
             return;
         }
 
@@ -83,7 +97,7 @@ public class Client {
                         replicaSocket.out().writeObject(new Message(MessageType.WRITE_FROM_CLIENT, splittedString[1], splittedString[2]));
                         inputMessage = (Message) replicaSocket.in().readObject();
                         replicaSocket.close();
-                        if(inputMessage.getType() != MessageType.ACK)
+                        if (inputMessage.getType() != MessageType.ACK)
                             throw new IOException();
                         logger.log(Level.INFO, "Value correctly registered.");
                         break;
