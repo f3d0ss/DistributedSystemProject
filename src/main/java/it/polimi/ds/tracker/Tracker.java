@@ -87,10 +87,10 @@ public class Tracker {
                         storage.addReplica(inputMessage.getAddress());
                         newTrackerIndex = storage.incrementAndGetTrackerIndex();
                         storage.unlock();
-                        replica.out().writeObject(new Message(MessageType.SEND_OTHER_REPLICAS, otherReplicas, newTrackerIndex));
                         for (Address address : otherReplicas) {
                             new MessageSender(new Message(MessageType.SEND_NEW_REPLICA, inputMessage.getAddress(), newTrackerIndex), address).start();
                         }
+                        replica.out().writeObject(new Message(MessageType.SEND_OTHER_REPLICAS, otherReplicas, newTrackerIndex));
                         break;
                     case ADD_CLIENT:
                         replica.out().writeObject(new Message(MessageType.SEND_REPLICA, storage.addClient()));

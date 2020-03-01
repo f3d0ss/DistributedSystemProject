@@ -43,10 +43,10 @@ class ReplicaTest {
             replica1.start();
             Thread.sleep(100);
 
-            // Starting the second replica TODO: Un-comment after the implementation of the handling of multiple replicas
-            //replica2 = new Thread(() -> Replica.main(new String[]{LOCALHOST, Integer.toString(TRACKER_PORT), Integer.toString(REPLICA2_PORT)}));
-            //replica2.start();
-            //Thread.sleep(100);
+            // Starting the second replica
+            replica2 = new Thread(() -> Replica.main(new String[]{LOCALHOST, Integer.toString(TRACKER_PORT), Integer.toString(REPLICA2_PORT)}));
+            replica2.start();
+            Thread.sleep(100);
 
             // Starting the first client
             client1 = TCPClient.connect(LOCALHOST, TRACKER_PORT);
@@ -55,13 +55,13 @@ class ReplicaTest {
             assertEquals(REPLICA1_PORT, inputMessage.getAddress().getPort());
             client1.close();
 
-            // Starting  the second client TODO: Un-comment after the implementation of the handling of multiple replicas
-            //client2 = TCPClient.connect(LOCALHOST, TRACKER_PORT);
-            //client2.out().writeObject(new Message(MessageType.ADD_CLIENT));
-            //inputMessage = (Message) client2.in().readObject();
-            //assertEquals(REPLICA2_PORT, inputMessage.getAddress().getPort());
-            //client2.close();
-            //Thread.sleep(100);
+            // Starting  the second client
+            client2 = TCPClient.connect(LOCALHOST, TRACKER_PORT);
+            client2.out().writeObject(new Message(MessageType.ADD_CLIENT));
+            inputMessage = (Message) client2.in().readObject();
+            assertEquals(REPLICA2_PORT, inputMessage.getAddress().getPort());
+            client2.close();
+            Thread.sleep(100);
 
             // Write of client1 on replica1
             client1 = TCPClient.connect(LOCALHOST, REPLICA1_PORT);
@@ -76,9 +76,30 @@ class ReplicaTest {
             assertEquals("1", inputMessage.getValue());
             client1.close();
 
+            // Write of client2 on replica2
+            client1 = TCPClient.connect(LOCALHOST, REPLICA1_PORT);
+            client1.out().writeObject(new Message(MessageType.WRITE_FROM_CLIENT, "y", "2"));
+            client1.close();
+
+            // Read of client1 of resource written by client2 (y)
+            client1 = TCPClient.connect(LOCALHOST, REPLICA1_PORT);
+            client1.out().writeObject(new Message(MessageType.READ_FROM_CLIENT, "y"));
+            inputMessage = (Message) client1.in().readObject();
+            assertEquals("y", inputMessage.getResource());
+            assertEquals("2", inputMessage.getValue());
+            client1.close();
+
+            // Read of client2 of resource written by client1 (x)
+            client1 = TCPClient.connect(LOCALHOST, REPLICA1_PORT);
+            client1.out().writeObject(new Message(MessageType.READ_FROM_CLIENT, "x"));
+            inputMessage = (Message) client1.in().readObject();
+            assertEquals("x", inputMessage.getResource());
+            assertEquals("1", inputMessage.getValue());
+            client1.close();
+
             // Closing all replicas
             replica1.interrupt();
-            //replica2.interrupt();
+            replica2.interrupt();
         } catch (IOException | ClassNotFoundException | InterruptedException e) {
             fail();
         }
