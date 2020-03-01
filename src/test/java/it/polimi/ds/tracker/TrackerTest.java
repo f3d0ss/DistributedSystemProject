@@ -52,7 +52,7 @@ public class TrackerTest {
     @Test
     public void removeReplicaTest() {
         try {
-            client.out().writeObject(new Message(MessageType.REMOVE_REPLICA, new Address("123.123.123.123", 123), 0));
+            client.out().writeObject(new Message(MessageType.REMOVE_REPLICA, new Address("123.123.123.123", 123)));
         } catch (IOException e) {
             fail();
         }
@@ -77,7 +77,7 @@ public class TrackerTest {
     @Test
     public void removeClientTest() {
         try {
-            client.out().writeObject(new Message(MessageType.REMOVE_CLIENT, new Address("123.123.123.123", 123), 0));
+            client.out().writeObject(new Message(MessageType.REMOVE_CLIENT, new Address("123.123.123.123", 123)));
         } catch (IOException e) {
             fail();
         }
