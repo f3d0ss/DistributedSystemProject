@@ -17,22 +17,47 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Replica {
+    private static final Logger logger = Logger.getLogger("Replica");
+    private static AtomicInteger messagesLeftToSend = new AtomicInteger(0);
+    private static AtomicBoolean isReplicaClosing = new AtomicBoolean(false);
     private Address replicaAddress;
     private List<Address> otherReplicaAddresses;
     private StateHandler state;
     private ServerSocket serverSocket;
     private TrackerIndexHandler trackerIndexHandler;     //need to be shared
-    private static AtomicInteger messagesLeftToSend = new AtomicInteger(0);
-    private static AtomicBoolean isReplicaClosing = new AtomicBoolean(false);
-    private static final Logger logger = Logger.getLogger("Replica");
 
     public static void main(String[] args) {
         Replica tracker = new Replica();
         tracker.start(args[0], args[1], args[2]);
     }
 
+    private static int getChoice() {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+        try {
+            return Integer.parseInt(reader.readLine());
+        } catch (NumberFormatException | IOException e) {
+            return -1;
+        }
+    }
+
+    public static void addMessageToBeSent() {
+        messagesLeftToSend.incrementAndGet();
+    }
+
+    public static void removeMessageToBeSent() {
+        messagesLeftToSend.decrementAndGet();
+    }
+
+    public static boolean isReplicaClosing() {
+        return isReplicaClosing.get();
+    }
+
+    public static void setIsReplicaClosing() {
+        Replica.isReplicaClosing.set(true);
+    }
+
     public void start(String trackerIp, String trackerPort, String replicaPort) {
-            Address trackerAddress = new Address(trackerIp, Integer.valueOf(trackerPort));
+        Address trackerAddress = new Address(trackerIp, Integer.valueOf(trackerPort));
         try {
             this.replicaAddress = new Address(InetAddress.getLocalHost().getHostAddress(), Integer.valueOf(replicaPort));
         } catch (UnknownHostException e) {
@@ -58,7 +83,7 @@ public class Replica {
         if (otherReplicaAddresses.isEmpty())
             state = new StateHandler(new ReplicaState(replicaAddress), replicaAddress);
 
-        for (int i = 0; state == null ; i++) {
+        for (int i = 0; state == null; i++) {
             Address otherReplica = otherReplicaAddresses.get(i % otherReplicaAddresses.size());
             try {
                 state = getState(TCPClient.connect(otherReplica), trackerIndexHandler.getTrackerIndex());
@@ -95,15 +120,6 @@ public class Replica {
         logger.log(Level.INFO, "This replica has correctly been closed.");
     }
 
-    private static int getChoice() {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-        try {
-            return Integer.parseInt(reader.readLine());
-        } catch (NumberFormatException | IOException e) {
-            return -1;
-        }
-    }
-
     private void runReplica(String replicaPort) {
         try {
             serverSocket = new ServerSocket(Integer.parseInt(replicaPort));
@@ -137,22 +153,6 @@ public class Replica {
         if (reply.getType().equals(MessageType.SEND_STATE))
             return new StateHandler(reply.getState(), replicaAddress);
         throw new IOException();
-    }
-
-    public static void addMessageToBeSent() {
-        messagesLeftToSend.incrementAndGet();
-    }
-
-    public static void removeMessageToBeSent() {
-        messagesLeftToSend.decrementAndGet();
-    }
-
-    public static boolean isReplicaClosing() {
-        return isReplicaClosing.get();
-    }
-
-    public static void setIsReplicaClosing() {
-        Replica.isReplicaClosing.set(true);
     }
 
     private static class IncomingMessageHandler extends Thread {
@@ -214,7 +214,7 @@ public class Replica {
         }
 
         private Message readFromClient(String resource) {
-                return new Message(MessageType.READ_ANSWER, resource, state.read(resource));
+            return new Message(MessageType.READ_ANSWER, resource, state.read(resource));
         }
 
         private void writeFromClient(String resource, String value) {
@@ -235,7 +235,6 @@ public class Replica {
 
 
         /**
-         *
          * @param update
          * @param incomingTrackerIndex
          * @return true if updateTaken, false otherwise
@@ -261,7 +260,7 @@ public class Replica {
                 Note: send state and queue
                 */
             return trackerIndexHandler.checkTrackerIndexAndGetState(incomingTrackerIndex, state);
-            
+
         }
 
         private void addNewReplica(Address address, int trackerIndex, StateHandler state, List<Address> activeReplicas) {

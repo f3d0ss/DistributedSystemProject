@@ -10,10 +10,10 @@ import java.util.logging.Logger;
 
 public class TCPClient {
 
+    private static final Logger logger = Logger.getLogger("TCPClient");
     private Socket connectedSocket;
     private ObjectInputStream in;
     private ObjectOutputStream out;
-    private static final Logger logger = Logger.getLogger("TCPClient");
 
     public TCPClient(Socket connectedSocket) throws IOException {
         if (!connectedSocket.isConnected())

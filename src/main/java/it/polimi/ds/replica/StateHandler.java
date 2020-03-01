@@ -22,6 +22,29 @@ public class StateHandler {
         this.replicaAddress = replicaAddress;
     }
 
+    private static int vectorCheck(Map<String, Integer> myVector, Map<String, Integer> newVector, Address from, boolean sameTrackerIndex) {
+        for (Map.Entry<String, Integer> entry : newVector.entrySet()) {
+            String key = entry.getKey();
+            int value = entry.getValue();
+            if (key.equals(from.toString())) {
+                if (value < myVector.getOrDefault(key, 0) + 1)
+                    return DISCARD;
+                else if (value > myVector.getOrDefault(key, 0) + 1)
+                    return ADD_TO_QUEUE;
+            }
+            if (sameTrackerIndex) {
+//                here if I don't have key => key exited the network and therefore I have all his update
+                if (myVector.containsKey(key) && value > myVector.get(key))
+                    return ADD_TO_QUEUE;
+            } else {
+//                here if I don't have key => key joined the network and therefore I consider it 0
+                if (value > myVector.getOrDefault(key, 0))
+                    return ADD_TO_QUEUE;
+            }
+        }
+        return ACCEPT;
+    }
+
     public ReplicaState getState() {
         return new ReplicaState(state);
     }
@@ -63,7 +86,7 @@ public class StateHandler {
 
     private void checkUpdateQueue() {
         Map<String, Integer> myVector = state.getVectorClock();
-        for (UpdateWithTracker updateWithTracker: state.getQueue()) {
+        for (UpdateWithTracker updateWithTracker : state.getQueue()) {
             Update update = updateWithTracker.getUpdate();
             if (vectorCheck(myVector, update.getVectorClock(), update.getFrom(), updateWithTracker.isSameTrackerIndex()) == ACCEPT) {
                 state.getQueue().remove(updateWithTracker);
@@ -73,29 +96,6 @@ public class StateHandler {
                 break;
             }
         }
-    }
-
-    private static int vectorCheck(Map<String, Integer> myVector, Map<String, Integer> newVector, Address from, boolean sameTrackerIndex) {
-        for (Map.Entry<String, Integer> entry : newVector.entrySet()) {
-            String key = entry.getKey();
-            int value = entry.getValue();
-            if (key.equals(from.toString())) {
-                if (value < myVector.getOrDefault(key, 0) + 1)
-                    return DISCARD;
-                else if (value > myVector.getOrDefault(key, 0) + 1)
-                    return ADD_TO_QUEUE;
-            }
-            if (sameTrackerIndex) {
-//                here if I don't have key => key exited the network and therefore I have all his update
-                if (myVector.containsKey(key) && value > myVector.get(key))
-                    return ADD_TO_QUEUE;
-            } else {
-//                here if I don't have key => key joined the network and therefore I consider it 0
-                if (value > myVector.getOrDefault(key, 0))
-                    return ADD_TO_QUEUE;
-            }
-        }
-        return ACCEPT;
     }
 
 }

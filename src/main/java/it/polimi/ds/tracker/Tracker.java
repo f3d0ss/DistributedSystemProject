@@ -15,13 +15,22 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Tracker {
+    private static final Logger logger = Logger.getLogger("Tracker");
     private ServerSocket serverSocket;
     private Storage storage = new Storage();
-    private static final Logger logger = Logger.getLogger("Tracker");
 
     public static void main(String[] args) {
         Tracker tracker = new Tracker();
         tracker.start(args[0]);
+    }
+
+    private static int getChoice() {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+        try {
+            return Integer.parseInt(reader.readLine());
+        } catch (NumberFormatException | IOException e) {
+            return -1;
+        }
     }
 
     private void start(String port) {
@@ -33,15 +42,6 @@ public class Tracker {
         while (getChoice() != 1);
         tracker.interrupt();
         logger.log(Level.INFO, "The tracker is now closed.");
-    }
-
-    private static int getChoice() {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-        try {
-            return Integer.parseInt(reader.readLine());
-        } catch (NumberFormatException | IOException e) {
-            return -1;
-        }
     }
 
     private void runTracker(int port) {
@@ -83,9 +83,9 @@ public class Tracker {
                 switch (inputMessage.getType()) {
                     case ADD_REPLICA:
                         storage.lock();
-                            otherReplicas = storage.getReplicas();
-                            storage.addReplica(inputMessage.getAddress());
-                            newTrackerIndex = storage.incrementAndGetTrackerIndex();
+                        otherReplicas = storage.getReplicas();
+                        storage.addReplica(inputMessage.getAddress());
+                        newTrackerIndex = storage.incrementAndGetTrackerIndex();
                         storage.unlock();
                         replica.out().writeObject(new Message(MessageType.SEND_OTHER_REPLICAS, otherReplicas, newTrackerIndex));
                         for (Address address : otherReplicas) {
@@ -97,9 +97,9 @@ public class Tracker {
                         break;
                     case REMOVE_REPLICA:
                         storage.lock();
-                            storage.removeReplica(inputMessage.getAddress());
-                            otherReplicas = storage.getReplicas();
-                            newTrackerIndex = storage.incrementAndGetTrackerIndex();
+                        storage.removeReplica(inputMessage.getAddress());
+                        otherReplicas = storage.getReplicas();
+                        newTrackerIndex = storage.incrementAndGetTrackerIndex();
                         storage.unlock();
                         for (Address address : otherReplicas) {
                             new MessageSender(new Message(MessageType.REMOVE_OLD_REPLICA, inputMessage.getAddress(), newTrackerIndex), address).start();
@@ -124,8 +124,8 @@ public class Tracker {
     private static class MessageSender extends Thread {
         private Message message;
         private Address to;
-        
-        public MessageSender (Message message, Address to) {
+
+        public MessageSender(Message message, Address to) {
             this.message = message;
             this.to = to;
         }

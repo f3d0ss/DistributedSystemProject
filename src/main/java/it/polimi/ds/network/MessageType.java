@@ -1,49 +1,49 @@
 package it.polimi.ds.network;
 
 public enum MessageType {
-    ADD_REPLICA{
+    ADD_REPLICA {
         @Override
         public String hasPayload() {
             return ADDRESS;
         }
     },
-    ADD_CLIENT{
+    ADD_CLIENT {
         @Override
         public String hasPayload() {
             return null;
         }
     },
-    REMOVE_REPLICA{
+    REMOVE_REPLICA {
         @Override
         public String hasPayload() {
             return ADDRESS;
         }
     },
-    REMOVE_CLIENT{
+    REMOVE_CLIENT {
         @Override
         public String hasPayload() {
             return ADDRESS;
         }
     },
-    SEND_REPLICA{
+    SEND_REPLICA {
         @Override
         public String hasPayload() {
             return ADDRESS;
         }
     },
-    SEND_NEW_REPLICA{
+    SEND_NEW_REPLICA {
         @Override
         public String hasPayload() {
             return ADDRESS_TRACKER_INDEX;
         }
     },
-    REMOVE_OLD_REPLICA{
+    REMOVE_OLD_REPLICA {
         @Override
         public String hasPayload() {
             return ADDRESS_TRACKER_INDEX;
         }
     },
-    SEND_OTHER_REPLICAS{
+    SEND_OTHER_REPLICAS {
         @Override
         public String hasPayload() {
             return ADDRESS_SET_TRACKER_INDEX;
@@ -67,32 +67,32 @@ public enum MessageType {
             return KEY_VALUE;
         }
     },
-    GET_STATE{
+    GET_STATE {
         @Override
         public String hasPayload() {
             return TRACKER_INDEX;
         }
     },
-    SEND_STATE{
+    SEND_STATE {
         @Override
         public String hasPayload() {
             return STATE;
         }
 
     },
-    NOT_STATE{
+    NOT_STATE {
         @Override
         public String hasPayload() {
             return null;
         }
     },
-    UPDATE_FROM_REPLICA{
+    UPDATE_FROM_REPLICA {
         @Override
         public String hasPayload() {
             return UPDATE;
         }
     },
-    REPLY_CLIENT{
+    REPLY_CLIENT {
         @Override
         public String hasPayload() {
             return KEY_VALUE;

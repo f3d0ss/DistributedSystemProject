@@ -13,19 +13,23 @@ import java.util.logging.Logger;
 
 public class Client {
 
-    private final Address serverAddress;
-    private static boolean done = false;
     private static final Logger logger = Logger.getLogger("Client");
+    private static boolean done = false;
+    private final Address serverAddress;
+
+    private Client(String serverIP, String serverPort) {
+        this.serverAddress = new Address(serverIP, Integer.parseInt(serverPort));
+    }
 
     public static void main(String[] args) {
         Client client = new Client(args[0], args[1]);
         while (!done)
             client.start();
-        logger.log(Level.INFO,"This client is now closed.");
+        logger.log(Level.INFO, "This client is now closed.");
     }
 
-    private Client(String serverIP, String serverPort) {
-        this.serverAddress = new Address(serverIP, Integer.parseInt(serverPort));
+    private static void setDone() {
+        done = true;
     }
 
     private void start() {
@@ -71,7 +75,7 @@ public class Client {
                         replicaSocket = TCPClient.connect(replicaAddress);
                         replicaSocket.out().writeObject(new Message(MessageType.WRITE_FROM_CLIENT, splittedString[1], splittedString[2]));
                         replicaSocket.close();
-                        logger.log(Level.INFO,"Value correctly registered.");
+                        logger.log(Level.INFO, "Value correctly registered.");
                         break;
                     // Exiting the client, inputString = exit
                     case "exit":
@@ -90,9 +94,5 @@ public class Client {
         } catch (ClassNotFoundException e) {
             logger.log(Level.WARNING, "Could not parse correctly the message, please try again.");
         }
-    }
-
-    private static void setDone() {
-        done = true;
     }
 }

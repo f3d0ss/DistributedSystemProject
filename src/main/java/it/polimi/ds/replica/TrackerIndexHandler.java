@@ -48,7 +48,6 @@ public class TrackerIndexHandler {
     }
 
     /**
-     *
      * @param update
      * @param incomingTrackerIndex
      * @param state
@@ -70,6 +69,7 @@ public class TrackerIndexHandler {
 
     /**
      * Methods called if `wait` is received
+     *
      * @param update
      * @param incomingTrackerIndex
      * @return true if you can resend the update

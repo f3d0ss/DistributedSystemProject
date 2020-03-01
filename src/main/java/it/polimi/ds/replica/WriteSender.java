@@ -8,21 +8,19 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class WriteSender extends Thread {
+    private static final Logger logger = Logger.getLogger("WriteSender");
     private Address otherReplica;
     private Update update;
     private List<Address> activeReplicas;
     private int trackerIndex;
     private TrackerIndexHandler trackerIndexHandler;
-    private static final Logger logger = Logger.getLogger("WriteSender");
 
     /**
-     *
-     * @param otherReplica this is the
-     * @param update this is the update to be sent
-     * @param activeReplicas this is used to check other replica is removed from the list of activeReplica
+     * @param otherReplica        this is the
+     * @param update              this is the update to be sent
+     * @param activeReplicas      this is used to check other replica is removed from the list of activeReplica
      * @param trackerIndex
      * @param trackerIndexHandler
-     *
      */
     public WriteSender(Address otherReplica, Update update, List<Address> activeReplicas, int trackerIndex, TrackerIndexHandler trackerIndexHandler) {
         this.otherReplica = otherReplica;

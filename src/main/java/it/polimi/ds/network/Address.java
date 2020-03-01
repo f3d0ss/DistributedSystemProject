@@ -12,6 +12,11 @@ public class Address implements Serializable {
         this.port = port;
     }
 
+    public static Address fromString(String address) {
+        String[] addressSplit = address.split(":");
+        return new Address(addressSplit[0], Integer.parseInt(addressSplit[1]));
+    }
+
     public String getIp() {
         return ip;
     }
@@ -34,10 +39,5 @@ public class Address implements Serializable {
     @Override
     public int hashCode() {
         return Objects.hash(ip, port);
-    }
-
-    public static Address fromString(String address) {
-        String[] addressSplit = address.split(":");
-        return new Address(addressSplit[0], Integer.parseInt(addressSplit[1]));
     }
 }
