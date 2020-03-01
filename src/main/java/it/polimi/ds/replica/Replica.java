@@ -18,7 +18,6 @@ import java.util.logging.Logger;
 
 public class Replica {
     private Address replicaAddress;
-    private Address trackerAddress;
     private List<Address> otherReplicaAddresses;
     private StateHandler state;
     private ServerSocket serverSocket;
@@ -33,13 +32,13 @@ public class Replica {
     }
 
     public void start(String trackerIp, String trackerPort, String replicaPort) {
+            Address trackerAddress = new Address(trackerIp, Integer.valueOf(trackerPort));
         try {
-            this.trackerAddress = new Address(trackerIp, Integer.valueOf(trackerPort));
             this.replicaAddress = new Address(InetAddress.getLocalHost().getHostAddress(), Integer.valueOf(replicaPort));
         } catch (UnknownHostException e) {
             logger.log(Level.SEVERE, "Could not start replica.");
         }
-        while (trackerIndexHandler == null){
+        while (trackerIndexHandler == null) {
             try {
                 trackerIndexHandler = joinNetwork(TCPClient.connect(trackerAddress));
             } catch (IOException e) {
@@ -56,9 +55,8 @@ public class Replica {
         }
         logger.log(Level.INFO, "Connected to the tracker successfully.");
 //        Try to get the state from one of the replicas
-        if (otherReplicaAddresses.isEmpty()){
+        if (otherReplicaAddresses.isEmpty())
             state = new StateHandler(new ReplicaState(replicaAddress), replicaAddress);
-        }
 
         for (int i = 0; state == null ; i++) {
             Address otherReplica = otherReplicaAddresses.get(i % otherReplicaAddresses.size());
@@ -181,7 +179,7 @@ public class Replica {
                         client.out().writeObject(readFromClient(inputMessage.getResource()));
                         break;
                     case WRITE_FROM_CLIENT:
-                        if(!Replica.isReplicaClosing())
+                        if (!Replica.isReplicaClosing())
                             writeFromClient(inputMessage.getResource(), inputMessage.getValue());
                         break;
                     case UPDATE_FROM_REPLICA:
@@ -222,7 +220,7 @@ public class Replica {
         private void writeFromClient(String resource, String value) {
             Update update = state.clientWrite(resource, value);
             logger.log(Level.INFO, () -> "Successfully wrote resource " + resource + " with value " + value);
-            // TODO: GET indexTracker (because not send to new replicas)
+            // Get indexTracker (because not send to new replicas)
             int trackerIndex = trackerIndexHandler.getTrackerIndex();
 /*          here after reading the trackerIndex a thread could increment it and update the otherReplicaAddress,
             we don't care, because if it was updated by an Exit from another replica it'ok if we don't send the update to the exited replica (would be check later otherwise)
@@ -243,7 +241,7 @@ public class Replica {
          * @return true if updateTaken, false otherwise
          */
         private boolean updateFromReplica(Update update, int incomingTrackerIndex) {
-            /* TODO: Check the incoming trackerIndex ITI, if:
+            /*  Check the incoming trackerIndex ITI, if:
                 ITI > my trackerIndex MTI then put the message in `updates from replicas waiting for T` queue
                             (maybe could be processed thanks to assumption `before exit finish propagate update`, TOTHINK)
                             no, because if myVectorClock not contain X I don't know
@@ -256,7 +254,7 @@ public class Replica {
         }
 
         private ReplicaState getReplicaState(int incomingTrackerIndex, StateHandler state) {
-            /* TODO: Check the incoming trackerIndex ITI, if:
+            /*  Check the incoming trackerIndex ITI, if:
                 ITI > my trackerIndex MTI reply with `NOT_STATE`
                 ITI < MTI then should be ok to send the state
                 ITI = MTI Send the whole state to the requesting replica.
@@ -268,7 +266,7 @@ public class Replica {
 
         private void addNewReplica(Address address, int trackerIndex, StateHandler state, List<Address> activeReplicas) {
             //Use trackerIndexHandler.executeTrackerUpdate
-            /* TODO: Check the incoming trackerIndex ITI, if:
+            /*  Check the incoming trackerIndex ITI, if:
                 ITI > my trackerIndex MTI + 1 then put the message in `updates from tracker waiting for T` queue
                 ITI < MTI + 1 message already received, ignore
                 ITI = MTI + 1 then add the Replica to the VClock and update MTI
@@ -278,7 +276,7 @@ public class Replica {
 
         private void removeOldReplica(Address address, int trackerIndex, StateHandler state, List<Address> activeReplicas) {
             //Use trackerIndexHandler.executeTrackerUpdate
-            /* TODO: Check the incoming trackerIndex ITI, if:
+            /*  Check the incoming trackerIndex ITI, if:
                 ITI > my trackerIndex MTI + 1 then put the message in `updates from tracker waiting for T` queue
                 ITI < MTI + 1 message already received, ignore
                 ITI = MTI + 1 then remove the Replica from the VClock and update MTI

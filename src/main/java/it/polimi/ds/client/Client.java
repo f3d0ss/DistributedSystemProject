@@ -19,7 +19,7 @@ public class Client {
 
     public static void main(String[] args) {
         Client client = new Client(args[0], args[1]);
-        while(!done)
+        while (!done)
             client.start();
         logger.log(Level.INFO,"This client is now closed.");
     }
@@ -46,13 +46,13 @@ public class Client {
             Address replicaAddress = inputMessage.getAddress();
             TCPClient replicaSocket;
             BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-            while(true) {
+            while (true) {
                 String inputString = reader.readLine();
                 String[] splittedString = inputString.split(" ");
                 switch (splittedString[0]) {
                     // Reading a value, inputString = read <resource>
                     case "read":
-                        if(splittedString.length!=2){
+                        if (splittedString.length != 2) {
                             logger.log(Level.INFO, "Usage: read <resource-name>");
                             break;
                         }
@@ -64,7 +64,7 @@ public class Client {
                         break;
                     // Writing a value, inputString = write <resource> <value>
                     case "write":
-                        if(splittedString.length!=3){
+                        if (splittedString.length != 3) {
                             logger.log(Level.INFO, "Usage: write <resource-name> <value>");
                             break;
                         }

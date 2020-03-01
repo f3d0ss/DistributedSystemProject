@@ -41,13 +41,11 @@ public class WriteSender extends Thread {
             TCPClient replica = TCPClient.connect(otherReplica);
             replica.out().writeObject(new Message(MessageType.UPDATE_FROM_REPLICA, update, trackerIndex));
             Message reply = (Message) replica.in().readObject();
-            if (reply.getType() == MessageType.WAIT) {
-                if (trackerIndexHandler.addToQueueOrRetryWrite(update, trackerIndex)){
-                    for (Address address : activeReplicas) {
-                        Replica.addMessageToBeSent();
-                        Thread writeSender = new WriteSender(address, update, activeReplicas, trackerIndex, trackerIndexHandler);
-                        writeSender.start();
-                    }
+            if (reply.getType() == MessageType.WAIT && trackerIndexHandler.addToQueueOrRetryWrite(update, trackerIndex)) {
+                for (Address address : activeReplicas) {
+                    Replica.addMessageToBeSent();
+                    Thread writeSender = new WriteSender(address, update, activeReplicas, trackerIndex, trackerIndexHandler);
+                    writeSender.start();
                 }
             }
             // otherwise the reply should be an ACK and nothing need to be done

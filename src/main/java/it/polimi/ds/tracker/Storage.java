@@ -35,9 +35,8 @@ public class Storage extends ReentrantLock {
     protected Address addClient() {
         Map.Entry<String, Integer> min = null;
         for (Map.Entry<String, Integer> entry : replicas.entrySet()) {
-            if (min == null || min.getValue() > entry.getValue()) {
+            if (min == null || min.getValue() > entry.getValue())
                 min = entry;
-            }
         }
         if (min == null)
             return null;

@@ -1,7 +1,5 @@
 package it.polimi.ds.network;
 
-import it.polimi.ds.network.Address;
-
 import java.io.Serializable;
 import java.util.Map;
 

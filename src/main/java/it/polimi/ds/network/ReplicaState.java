@@ -28,7 +28,7 @@ public class ReplicaState implements Serializable {
         return new HashMap<>(vectorClock);
     }
 
-    public void write(Map<String, Integer> vectorClock, String key, String value){
+    public void write(Map<String, Integer> vectorClock, String key, String value) {
         this.vectorClock = new HashMap<>(vectorClock);
         store.put(key, value);
     }
@@ -37,7 +37,7 @@ public class ReplicaState implements Serializable {
         return queue;
     }
 
-    public String read(String key){
+    public String read(String key) {
         return store.get(key);
     }
 

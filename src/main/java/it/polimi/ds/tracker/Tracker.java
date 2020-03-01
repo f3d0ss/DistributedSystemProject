@@ -125,14 +125,14 @@ public class Tracker {
         private Message message;
         private Address to;
         
-        public MessageSender (Message message, Address to){
+        public MessageSender (Message message, Address to) {
             this.message = message;
             this.to = to;
         }
 
         @Override
         public void run() {
-            while (true){
+            while (true) {
                 try {
                     TCPClient currentOtherReplica = TCPClient.connect(to);
                     currentOtherReplica.out().writeObject(message);

@@ -24,23 +24,23 @@ public class TrackerIndexHandler {
     }
 
     public synchronized void executeTrackerUpdate(TrackerUpdate trackerUpdate, StateHandler state, List<Address> activeReplicas) {
-        if (trackerUpdate.getTrackerIndex() > this.trackerIndex + 1){
+        if (trackerUpdate.getTrackerIndex() > this.trackerIndex + 1) {
             updateFromTrackerQueue.add(trackerUpdate);
-        }else if (trackerUpdate.getTrackerIndex() == this.trackerIndex + 1) {
+        } else if (trackerUpdate.getTrackerIndex() == this.trackerIndex + 1) {
             if (trackerUpdate.getType().equals(TrackerUpdate.JOIN))
                 state.addAddressKey(trackerUpdate.getAddress());
             else if (trackerUpdate.getType().equals(TrackerUpdate.EXIT))
                 state.removeAddressKey(trackerUpdate.getAddress());
             trackerIndex++;
-            for (Update update : updateToBeSendQueue){
+            for (Update update : updateToBeSendQueue) {
                 updateToBeSendQueue.remove(update);
-                for (Address replica : activeReplicas){
+                for (Address replica : activeReplicas) {
                     Replica.addMessageToBeSent();
                     Thread writeSender = new WriteSender(replica, update, activeReplicas, trackerIndex, this);
                     writeSender.start();
                 }
             }
-            for (TrackerUpdate queuedTrackerUpdate : updateFromTrackerQueue){
+            for (TrackerUpdate queuedTrackerUpdate : updateFromTrackerQueue) {
                 updateFromTrackerQueue.remove(queuedTrackerUpdate);
                 executeTrackerUpdate(queuedTrackerUpdate, state, activeReplicas);
             }
@@ -62,7 +62,7 @@ public class TrackerIndexHandler {
 
     }
 
-    public synchronized ReplicaState checkTrackerIndexAndGetState(int incomingTrackerIndex, StateHandler stateHandler){
+    public synchronized ReplicaState checkTrackerIndexAndGetState(int incomingTrackerIndex, StateHandler stateHandler) {
         if (incomingTrackerIndex > trackerIndex)
             return null;
         return stateHandler.getState();
@@ -81,7 +81,7 @@ public class TrackerIndexHandler {
         return false;
     }
 
-    public synchronized boolean isOutgoingQueueEmpty(){
+    public synchronized boolean isOutgoingQueueEmpty() {
         return updateToBeSendQueue.isEmpty();
     }
 
