@@ -94,7 +94,6 @@
                                 <filter>
                                     <artifact>*:*</artifact>
                                     <excludes>
-                                        <exclude>it/polimi/ds/replica/**</exclude>
                                         <exclude>it/polimi/ds/client/**</exclude>
                                     </excludes>
                                 </filter>
@@ -143,7 +142,6 @@
                                     <artifact>*:*</artifact>
                                     <excludes>
                                         <exclude>it/polimi/ds/tracker/**</exclude>
-                                        <exclude>it/polimi/ds/replica/**</exclude>
                                     </excludes>
                                 </filter>
                             </filters>

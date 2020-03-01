@@ -52,6 +52,10 @@ public class Client {
                 switch (splittedString[0]) {
                     // Reading a value, inputString = read <resource>
                     case "read":
+                        if(splittedString.length!=2){
+                            logger.log(Level.INFO, "Usage: read <resource-name>");
+                            break;
+                        }
                         replicaSocket = TCPClient.connect(replicaAddress);
                         replicaSocket.out().writeObject(new Message(MessageType.READ_FROM_CLIENT, splittedString[1]));
                         inputMessage = (Message) replicaSocket.in().readObject();
@@ -60,6 +64,10 @@ public class Client {
                         break;
                     // Writing a value, inputString = write <resource> <value>
                     case "write":
+                        if(splittedString.length!=3){
+                            logger.log(Level.INFO, "Usage: write <resource-name> <value>");
+                            break;
+                        }
                         replicaSocket = TCPClient.connect(replicaAddress);
                         replicaSocket.out().writeObject(new Message(MessageType.WRITE_FROM_CLIENT, splittedString[1], splittedString[2]));
                         replicaSocket.close();
