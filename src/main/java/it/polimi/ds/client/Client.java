@@ -68,6 +68,8 @@ public class Client {
                         replicaSocket = TCPClient.connect(replicaAddress);
                         replicaSocket.out().writeObject(new Message(MessageType.READ_FROM_CLIENT, splittedString[1]));
                         inputMessage = (Message) replicaSocket.in().readObject();
+                        if (inputMessage.getResource() == null || inputMessage.getValue() == null)
+                            throw new IOException();
                         System.out.println("Resource " + inputMessage.getResource() + " has value " + inputMessage.getValue() + ".");
                         replicaSocket.close();
                         break;
@@ -79,7 +81,10 @@ public class Client {
                         }
                         replicaSocket = TCPClient.connect(replicaAddress);
                         replicaSocket.out().writeObject(new Message(MessageType.WRITE_FROM_CLIENT, splittedString[1], splittedString[2]));
+                        inputMessage = (Message) replicaSocket.in().readObject();
                         replicaSocket.close();
+                        if(inputMessage.getType() != MessageType.ACK)
+                            throw new IOException();
                         logger.log(Level.INFO, "Value correctly registered.");
                         break;
                     // Exiting the client, inputString = exit

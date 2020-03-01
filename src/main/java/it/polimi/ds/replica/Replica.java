@@ -176,11 +176,17 @@ public class Replica {
                 Message inputMessage = (Message) client.in().readObject();
                 switch (inputMessage.getType()) {
                     case READ_FROM_CLIENT:
-                        client.out().writeObject(readFromClient(inputMessage.getResource()));
+                        if (!Replica.isReplicaClosing())
+                            client.out().writeObject(readFromClient(inputMessage.getResource()));
+                        else
+                            client.out().writeObject(new Message(MessageType.READ_ANSWER, null, null));
                         break;
                     case WRITE_FROM_CLIENT:
-                        if (!Replica.isReplicaClosing())
+                        if (!Replica.isReplicaClosing()) {
                             writeFromClient(inputMessage.getResource(), inputMessage.getValue());
+                            client.out().writeObject(new Message(MessageType.ACK));
+                        } else
+                            client.out().writeObject(new Message(MessageType.WAIT));
                         break;
                     case UPDATE_FROM_REPLICA:
                         if (updateFromReplica(inputMessage.getUpdate(), inputMessage.getTrackerIndex()))
