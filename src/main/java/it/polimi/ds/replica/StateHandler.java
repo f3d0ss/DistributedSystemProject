@@ -31,13 +31,12 @@ public class StateHandler {
                     return DISCARD;
                 else if (value > myVector.getOrDefault(key, 0) + 1)
                     return ADD_TO_QUEUE;
-            }
-            if (sameTrackerIndex) {
-//                here if I don't have key => key exited the network and therefore I have all his update
+            } else if (sameTrackerIndex) {
+                //                here if I don't have key => key exited the network and therefore I have all his update
                 if (myVector.containsKey(key) && value > myVector.get(key))
                     return ADD_TO_QUEUE;
             } else {
-//                here if I don't have key => key joined the network and therefore I consider it 0
+                //                here if I don't have key => key joined the network and therefore I consider it 0
                 if (value > myVector.getOrDefault(key, 0))
                     return ADD_TO_QUEUE;
             }

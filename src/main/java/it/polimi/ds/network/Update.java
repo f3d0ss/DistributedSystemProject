@@ -3,7 +3,7 @@ package it.polimi.ds.network;
 import java.io.Serializable;
 import java.util.Map;
 
-public class Update implements Serializable {
+public class Update implements Serializable, Comparable {
     private Map<String, Integer> vectorClock;
     private Address from;
     private String key;
@@ -32,4 +32,17 @@ public class Update implements Serializable {
         return value;
     }
 
+    @Override
+    public int compareTo(Object o) {
+        if (o instanceof Update) {
+            Update c = (Update) o;
+            if (from.equals(c.from)) {
+                if (vectorClock.get(from.toString()) > c.vectorClock.get(c.from.toString()))
+                    return 1;
+                else
+                    return -1;
+            }
+        }
+        return 0;
+    }
 }

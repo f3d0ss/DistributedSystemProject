@@ -27,10 +27,13 @@ public class TrackerIndexHandler {
         if (trackerUpdate.getTrackerIndex() > this.trackerIndex + 1) {
             updateFromTrackerQueue.add(trackerUpdate);
         } else if (trackerUpdate.getTrackerIndex() == this.trackerIndex + 1) {
-            if (trackerUpdate.getType().equals(TrackerUpdate.JOIN))
+            if (trackerUpdate.getType().equals(TrackerUpdate.JOIN)) {
                 state.addAddressKey(trackerUpdate.getAddress());
-            else if (trackerUpdate.getType().equals(TrackerUpdate.EXIT))
+                activeReplicas.add(trackerUpdate.getAddress());
+            } else if (trackerUpdate.getType().equals(TrackerUpdate.EXIT)) {
                 state.removeAddressKey(trackerUpdate.getAddress());
+                activeReplicas.remove(trackerUpdate.getAddress());
+            }
             trackerIndex++;
             for (Update update : updateToBeSendQueue) {
                 updateToBeSendQueue.remove(update);
