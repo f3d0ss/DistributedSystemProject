@@ -40,7 +40,7 @@ public class Client {
             serverSocket.out().writeObject(new Message(MessageType.ADD_CLIENT));
             inputMessage = (Message) serverSocket.in().readObject();
             serverSocket.close();
-            logger.log(Level.INFO, () -> "Connected to server: " + serverAddress.toString());
+            logger.log(Level.INFO, () -> "Connected to tracker server: " + serverAddress.toString());
         } catch (IOException | ClassNotFoundException e) {
             logger.log(Level.SEVERE, "Impossible to reach the server, exiting.");
             return;
@@ -48,6 +48,11 @@ public class Client {
 
         try {
             Address replicaAddress = inputMessage.getAddress();
+            if (replicaAddress == null) { //avoid nullpointer when no replicas are available
+                logger.log(Level.INFO, "There are no replicas available, press Enter to retry");
+                new BufferedReader(new InputStreamReader(System.in)).readLine();
+                return;
+            }
             TCPClient replicaSocket;
             BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
             while (true) {
