@@ -48,8 +48,8 @@ public class Replica {
         messagesLeftToSend.decrementAndGet();
     }
 
-    public static boolean isReplicaClosing() {
-        return isReplicaClosing.get();
+    public static boolean replicaIsNotClosing() {
+        return !isReplicaClosing.get();
     }
 
     public static void setIsReplicaClosing() {
@@ -96,7 +96,7 @@ public class Replica {
         Thread replica = new Thread(() -> runReplica(replicaPort));
         replica.start();
         do {
-            logger.log(Level.INFO, "Press 1 to close the Replica");
+            logger.log(Level.INFO, "Press 1 to close the Replica.");
         }
         while (getChoice() != 1);
         logger.log(Level.INFO, "Waiting until all messages are sent...");
@@ -116,6 +116,11 @@ public class Replica {
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Could not inform the tracker of the replica closure.");
         }
+        try {
+            serverSocket.close();
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, "Could not close the replica properly.");
+        }
         replica.interrupt();
         logger.log(Level.INFO, "This replica has correctly been closed.");
     }
@@ -127,7 +132,7 @@ public class Replica {
                 new IncomingMessageHandler(otherReplicaAddresses, serverSocket.accept(), state, trackerIndexHandler).start();
             }
         } catch (IOException e) {
-            logger.log(Level.SEVERE, "Could not accept the request.");
+            // This exception must be ignored, it happens when the main thread interrupts this one
         }
         stop();
     }
@@ -143,6 +148,7 @@ public class Replica {
     private TrackerIndexHandler joinNetwork(TCPClient client) throws IOException, ClassNotFoundException {
         client.out().writeObject(new Message(MessageType.ADD_REPLICA, replicaAddress));
         Message reply = (Message) client.in().readObject();
+        client.close();
         otherReplicaAddresses = reply.getAddressSet();
         return new TrackerIndexHandler(reply.getTrackerIndex());
     }
@@ -150,6 +156,7 @@ public class Replica {
     private StateHandler getState(TCPClient client, int trackerIndex) throws IOException, ClassNotFoundException {
         client.out().writeObject(new Message(MessageType.GET_STATE, trackerIndex));
         Message reply = ((Message) client.in().readObject());
+        client.close();
         if (reply.getType().equals(MessageType.SEND_STATE))
             return new StateHandler(reply.getState(), replicaAddress);
         throw new IOException();
@@ -176,13 +183,13 @@ public class Replica {
                 Message inputMessage = (Message) client.in().readObject();
                 switch (inputMessage.getType()) {
                     case READ_FROM_CLIENT:
-                        if (!Replica.isReplicaClosing())
+                        if (Replica.replicaIsNotClosing())
                             client.out().writeObject(readFromClient(inputMessage.getResource()));
                         else
                             client.out().writeObject(new Message(MessageType.READ_ANSWER, null, null));
                         break;
                     case WRITE_FROM_CLIENT:
-                        if (!Replica.isReplicaClosing()) {
+                        if (Replica.replicaIsNotClosing()) {
                             writeFromClient(inputMessage.getResource(), inputMessage.getValue());
                             client.out().writeObject(new Message(MessageType.ACK));
                         } else

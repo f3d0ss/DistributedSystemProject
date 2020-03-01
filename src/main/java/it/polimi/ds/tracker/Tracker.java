@@ -37,9 +37,14 @@ public class Tracker {
         Thread tracker = new Thread(() -> runTracker(Integer.parseInt(port)));
         tracker.start();
         do {
-            logger.log(Level.INFO, "Press 1 to close the Tracker");
+            logger.log(Level.INFO, "Press 1 to close the Tracker.");
         }
         while (getChoice() != 1);
+        try {
+            serverSocket.close();
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, "Could not close the tracker properly.");
+        }
         tracker.interrupt();
         logger.log(Level.INFO, "The tracker is now closed.");
     }
@@ -51,7 +56,7 @@ public class Tracker {
                 new ClientHandler(serverSocket.accept(), storage).start();
             }
         } catch (IOException e) {
-            logger.log(Level.WARNING, "Could not accept replica request.");
+            // This exception must be ignored, it happens when the main thread interrupts this one
         }
         stop();
     }
