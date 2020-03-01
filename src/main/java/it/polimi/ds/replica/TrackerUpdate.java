@@ -1,6 +1,5 @@
 package it.polimi.ds.replica;
 
-
 import it.polimi.ds.network.Address;
 
 public class TrackerUpdate {

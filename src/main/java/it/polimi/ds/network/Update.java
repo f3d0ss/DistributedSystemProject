@@ -1,4 +1,4 @@
-package it.polimi.ds.replica;
+package it.polimi.ds.network;
 
 import it.polimi.ds.network.Address;
 

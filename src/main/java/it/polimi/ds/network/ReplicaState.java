@@ -1,6 +1,4 @@
-package it.polimi.ds.replica;
-
-import it.polimi.ds.network.Address;
+package it.polimi.ds.network;
 
 import java.io.Serializable;
 import java.util.HashMap;

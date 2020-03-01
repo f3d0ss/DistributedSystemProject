@@ -1,6 +1,8 @@
 package it.polimi.ds.replica;
 
 import it.polimi.ds.network.Address;
+import it.polimi.ds.network.ReplicaState;
+import it.polimi.ds.network.Update;
 
 import java.util.HashSet;
 import java.util.List;

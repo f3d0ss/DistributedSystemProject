@@ -1,6 +1,9 @@
 package it.polimi.ds.replica;
 
 import it.polimi.ds.network.Address;
+import it.polimi.ds.network.ReplicaState;
+import it.polimi.ds.network.Update;
+import it.polimi.ds.network.UpdateWithTracker;
 
 import java.util.Map;
 

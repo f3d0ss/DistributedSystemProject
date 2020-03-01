@@ -1,6 +1,8 @@
-package it.polimi.ds.replica;
+package it.polimi.ds.network;
 
-public class UpdateWithTracker{
+import java.io.Serializable;
+
+public class UpdateWithTracker implements Serializable {
     private Update update;
     private boolean sameTrackerIndex;
 

@@ -1,8 +1,5 @@
 package it.polimi.ds.network;
 
-import it.polimi.ds.replica.ReplicaState;
-import it.polimi.ds.replica.Update;
-
 import java.io.Serializable;
 import java.util.List;
 
