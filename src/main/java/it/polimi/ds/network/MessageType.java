@@ -16,13 +16,13 @@ public enum MessageType {
     REMOVE_REPLICA{
         @Override
         public String hasPayload() {
-            return ADDRESS_TRACKER_INDEX;
+            return ADDRESS;
         }
     },
     REMOVE_CLIENT{
         @Override
         public String hasPayload() {
-            return ADDRESS_TRACKER_INDEX;
+            return ADDRESS;
         }
     },
     SEND_REPLICA{
