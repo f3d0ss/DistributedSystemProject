@@ -84,7 +84,7 @@ public class TrackerIndexHandler {
         return false;
     }
 
-    public synchronized boolean isOutgoingQueueEmpty() {
+    public boolean isOutgoingQueueEmpty() {
         return updateToBeSendQueue.isEmpty();
     }
 
