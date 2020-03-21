@@ -18,7 +18,7 @@ import java.util.logging.Logger;
 
 public class Replica {
     private static final Logger logger = Logger.getLogger("Replica");
-    private static AtomicInteger messagesLeftToSend = new AtomicInteger(0);
+    private static final AtomicInteger messagesLeftToSend = new AtomicInteger(0);
     private static AtomicBoolean isReplicaClosing = new AtomicBoolean(false);
     private Address replicaAddress;
     private List<Address> otherReplicaAddresses;
@@ -41,11 +41,15 @@ public class Replica {
     }
 
     public static void addMessageToBeSent() {
-        messagesLeftToSend.incrementAndGet();
+        synchronized (messagesLeftToSend) {
+            messagesLeftToSend.incrementAndGet();
+        }
     }
 
     public static void removeMessageToBeSent() {
-        messagesLeftToSend.decrementAndGet();
+        synchronized (messagesLeftToSend) {
+            messagesLeftToSend.decrementAndGet();
+        }
     }
 
     public static boolean replicaIsNotClosing() {
@@ -101,7 +105,22 @@ public class Replica {
         while (getChoice() != 1);
         logger.log(Level.INFO, "Waiting until all messages are sent...");
         Replica.setIsReplicaClosing(); // This ensures that the replica can no longer accept incoming requests from clients
-        while (messagesLeftToSend.get() != 0 || !trackerIndexHandler.isOutgoingQueueEmpty()) {
+
+        while (true) {
+            synchronized (messagesLeftToSend) {
+                if (messagesLeftToSend.get() == 0 && trackerIndexHandler.isOutgoingQueueEmpty()) {
+                    //Replica can exit:
+                    exitNetwork(trackerAddress);
+                    try {
+                        serverSocket.close();
+                    } catch (IOException e) {
+                        logger.log(Level.SEVERE, "Could not close the replica properly.");
+                    }
+                    replica.interrupt();
+                    logger.log(Level.INFO, "This replica has correctly been closed.");
+                    return;
+                }
+            }
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
@@ -109,20 +128,17 @@ public class Replica {
                 Thread.currentThread().interrupt();
             }
         }
+    }
+
+    private void exitNetwork(Address trackerAddress) {
         try {
             TCPClient tracker = TCPClient.connect(trackerAddress);
             tracker.out().writeObject(new Message(MessageType.REMOVE_REPLICA, replicaAddress));
             tracker.close();
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Could not inform the tracker of the replica closure.");
+            exitNetwork(trackerAddress);
         }
-        try {
-            serverSocket.close();
-        } catch (IOException e) {
-            logger.log(Level.SEVERE, "Could not close the replica properly.");
-        }
-        replica.interrupt();
-        logger.log(Level.INFO, "This replica has correctly been closed.");
     }
 
     private void runReplica(String replicaPort) {
@@ -241,11 +257,13 @@ public class Replica {
             we don't care, because if it was updated by an Exit from another replica it'ok if we don't send the update to the exited replica (would be check later otherwise)
             if it was updated by a Join we will simply send the update to the new replica who will reply with `wait` causing the resend of the message, no biggy
  */
-            for (Address address : otherReplicaBeforeSend) {
+            Replica.addMessageToBeSent();
+            for (Address address : otherReplicaAddresses) {
                 Replica.addMessageToBeSent();
                 Thread writeSender = new WriteSender(address, update, otherReplicaAddresses, trackerIndex, trackerIndexHandler, otherReplicaBeforeSend);
                 writeSender.start();
             }
+            Replica.removeMessageToBeSent();
         }
 
 

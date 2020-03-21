@@ -105,7 +105,7 @@ public class TrackerIndexHandler {
         updateToBeSendQueue.add(new UpdateToBeSendQueueElements(update, otherReplicasBeforeSend, incomingTrackerIndex));
     }
 
-    public synchronized boolean isOutgoingQueueEmpty() {
+    public boolean isOutgoingQueueEmpty() {
         return updateToBeSendQueue.isEmpty();
     }
 
