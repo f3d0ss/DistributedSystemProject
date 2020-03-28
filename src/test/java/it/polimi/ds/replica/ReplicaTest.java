@@ -2,10 +2,7 @@ package it.polimi.ds.replica;
 
 import it.polimi.ds.network.Message;
 import it.polimi.ds.network.MessageType;
-import it.polimi.ds.network.TCPClient;
 import it.polimi.ds.tracker.Tracker;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -14,92 +11,71 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
 class ReplicaTest {
-    public static final String LOCALHOST = "127.0.0.1";
-    public static final int TRACKER_PORT = 2222;
-    public static final int REPLICA1_PORT = 3333;
-    public static final int REPLICA2_PORT = 4444;
+    private static final String LOCALHOST = "127.0.0.1";
+    private int trackerPort;
+    private int replica1Port;
+    private int replica2Port;
     private static Thread tracker, replica1, replica2;
-    private TCPClient client1, client2;
-    private Message inputMessage;
+    private Message answer;
 
-    @BeforeAll
-    public static void startTracker() {
-        // Starting the tracker
-        tracker = new Thread(() -> Tracker.main(new String[]{Integer.toString(TRACKER_PORT)}));
-        tracker.start();
-    }
-
-    @AfterAll
-    public static void interruptTracker() {
-        // Closing tracker
-        tracker.interrupt();
-    }
-
+    // This test run the replicas in a base case scenario with 1 tracker, 2 replicas and 2 clients
     @Test
-    public void test1() {
+    public void baseTest() {
         try {
+            // Starting the tracker
+            trackerPort = ReplicaHelper.getPort();
+            tracker = new Thread(() -> Tracker.main(new String[]{Integer.toString(trackerPort)}));
+            tracker.start();
+
             // Starting the first replica
-            replica1 = new Thread(() -> Replica.main(new String[]{LOCALHOST, Integer.toString(TRACKER_PORT), Integer.toString(REPLICA1_PORT)}));
+            replica1Port = ReplicaHelper.getPort();
+            replica1 = new Thread(() -> Replica.main(new String[]{LOCALHOST, Integer.toString(trackerPort), Integer.toString(replica1Port)}));
             replica1.start();
             Thread.sleep(100);
 
             // Starting the second replica
-            replica2 = new Thread(() -> Replica.main(new String[]{LOCALHOST, Integer.toString(TRACKER_PORT), Integer.toString(REPLICA2_PORT)}));
+            replica2Port = ReplicaHelper.getPort();
+            replica2 = new Thread(() -> Replica.main(new String[]{LOCALHOST, Integer.toString(trackerPort), Integer.toString(replica2Port)}));
             replica2.start();
             Thread.sleep(100);
 
             // Starting the first client
-            client1 = TCPClient.connect(LOCALHOST, TRACKER_PORT);
-            client1.out().writeObject(new Message(MessageType.ADD_CLIENT));
-            inputMessage = (Message) client1.in().readObject();
-            assertEquals(REPLICA1_PORT, inputMessage.getAddress().getPort());
-            client1.close();
+            answer = ReplicaHelper.sendMessageAndReceive(trackerPort, new Message(MessageType.ADD_CLIENT));
+            assertEquals(replica1Port, answer.getAddress().getPort());
 
             // Starting  the second client
-            client2 = TCPClient.connect(LOCALHOST, TRACKER_PORT);
-            client2.out().writeObject(new Message(MessageType.ADD_CLIENT));
-            inputMessage = (Message) client2.in().readObject();
-            assertEquals(REPLICA2_PORT, inputMessage.getAddress().getPort());
-            client2.close();
+            answer = ReplicaHelper.sendMessageAndReceive(trackerPort, new Message(MessageType.ADD_CLIENT));
+            assertEquals(replica2Port, answer.getAddress().getPort());
             Thread.sleep(100);
 
             // Write of client1 on replica1
-            client1 = TCPClient.connect(LOCALHOST, REPLICA1_PORT);
-            client1.out().writeObject(new Message(MessageType.WRITE_FROM_CLIENT, "x", "1"));
-            client1.close();
+            ReplicaHelper.sendMessage(replica1Port, new Message(MessageType.WRITE_FROM_CLIENT, "x", "1"));
 
             // Read of client1 on replica1
-            client1 = TCPClient.connect(LOCALHOST, REPLICA1_PORT);
-            client1.out().writeObject(new Message(MessageType.READ_FROM_CLIENT, "x"));
-            inputMessage = (Message) client1.in().readObject();
-            assertEquals("x", inputMessage.getResource());
-            assertEquals("1", inputMessage.getValue());
-            client1.close();
+            answer = ReplicaHelper.sendMessageAndReceive(replica1Port, new Message(MessageType.READ_FROM_CLIENT, "x"));
+            assertEquals("x", answer.getResource());
+            assertEquals("1", answer.getValue());
 
             // Write of client2 on replica2
-            client1 = TCPClient.connect(LOCALHOST, REPLICA1_PORT);
-            client1.out().writeObject(new Message(MessageType.WRITE_FROM_CLIENT, "y", "2"));
-            client1.close();
+            ReplicaHelper.sendMessage(replica2Port, new Message(MessageType.WRITE_FROM_CLIENT, "y", "2"));
+            Thread.sleep(100);
 
             // Read of client1 of resource written by client2 (y)
-            client1 = TCPClient.connect(LOCALHOST, REPLICA1_PORT);
-            client1.out().writeObject(new Message(MessageType.READ_FROM_CLIENT, "y"));
-            inputMessage = (Message) client1.in().readObject();
-            assertEquals("y", inputMessage.getResource());
-            assertEquals("2", inputMessage.getValue());
-            client1.close();
+            answer = ReplicaHelper.sendMessageAndReceive(replica1Port, new Message(MessageType.READ_FROM_CLIENT, "y"));
+            assertEquals("y", answer.getResource());
+            assertEquals("2", answer.getValue());
 
             // Read of client2 of resource written by client1 (x)
-            client1 = TCPClient.connect(LOCALHOST, REPLICA1_PORT);
-            client1.out().writeObject(new Message(MessageType.READ_FROM_CLIENT, "x"));
-            inputMessage = (Message) client1.in().readObject();
-            assertEquals("x", inputMessage.getResource());
-            assertEquals("1", inputMessage.getValue());
-            client1.close();
+            answer = ReplicaHelper.sendMessageAndReceive(replica2Port, new Message(MessageType.READ_FROM_CLIENT, "x"));
+            assertEquals("x", answer.getResource());
+            assertEquals("1", answer.getValue());
 
             // Closing all replicas
             replica1.interrupt();
             replica2.interrupt();
+
+            // Closing tracker
+            tracker.interrupt();
         } catch (IOException | ClassNotFoundException | InterruptedException e) {
             fail();
         }
