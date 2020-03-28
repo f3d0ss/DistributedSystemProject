@@ -5,10 +5,9 @@ import it.polimi.ds.network.TCPClient;
 
 import java.io.IOException;
 
-public class ReplicaHelper {
+public class ReplicaTestHelper {
     private static final String LOCALHOST = "127.0.0.1";
     private static int port = 2222; // Incremented every time in order to avoid trackers/replicas with the same port
-    public static int N = 5; // Must be greater or equal than 2
 
     public static void sendMessage(String address, int port, Message message) throws IOException {
         TCPClient client = TCPClient.connect(address, port);

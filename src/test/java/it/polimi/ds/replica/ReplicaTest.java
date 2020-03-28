@@ -12,69 +12,155 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 class ReplicaTest {
     private static final String LOCALHOST = "127.0.0.1";
+    private static int N = 5;
     private int trackerPort;
     private int replica1Port;
     private int replica2Port;
     private static Thread tracker, replica1, replica2;
     private Message answer;
 
-    // This test run the replicas in a base case scenario with 1 tracker, 2 replicas and 2 clients
+    // This test runs the replicas in a base case scenario with 1 tracker, 2 replicas and 2 clients
     @Test
     public void baseTest() {
         try {
             // Starting the tracker
-            trackerPort = ReplicaHelper.getPort();
+            trackerPort = ReplicaTestHelper.getPort();
             tracker = new Thread(() -> Tracker.main(new String[]{Integer.toString(trackerPort)}));
             tracker.start();
 
             // Starting the first replica
-            replica1Port = ReplicaHelper.getPort();
+            replica1Port = ReplicaTestHelper.getPort();
             replica1 = new Thread(() -> Replica.main(new String[]{LOCALHOST, Integer.toString(trackerPort), Integer.toString(replica1Port)}));
             replica1.start();
             Thread.sleep(100);
 
             // Starting the second replica
-            replica2Port = ReplicaHelper.getPort();
+            replica2Port = ReplicaTestHelper.getPort();
             replica2 = new Thread(() -> Replica.main(new String[]{LOCALHOST, Integer.toString(trackerPort), Integer.toString(replica2Port)}));
             replica2.start();
             Thread.sleep(100);
 
             // Starting the first client
-            answer = ReplicaHelper.sendMessageAndReceive(trackerPort, new Message(MessageType.ADD_CLIENT));
+            answer = ReplicaTestHelper.sendMessageAndReceive(trackerPort, new Message(MessageType.ADD_CLIENT));
             assertEquals(replica1Port, answer.getAddress().getPort());
 
             // Starting  the second client
-            answer = ReplicaHelper.sendMessageAndReceive(trackerPort, new Message(MessageType.ADD_CLIENT));
+            answer = ReplicaTestHelper.sendMessageAndReceive(trackerPort, new Message(MessageType.ADD_CLIENT));
             assertEquals(replica2Port, answer.getAddress().getPort());
             Thread.sleep(100);
 
             // Write of client1 on replica1
-            ReplicaHelper.sendMessage(replica1Port, new Message(MessageType.WRITE_FROM_CLIENT, "x", "1"));
+            ReplicaTestHelper.sendMessage(replica1Port, new Message(MessageType.WRITE_FROM_CLIENT, "x", "1"));
 
             // Read of client1 on replica1
-            answer = ReplicaHelper.sendMessageAndReceive(replica1Port, new Message(MessageType.READ_FROM_CLIENT, "x"));
+            answer = ReplicaTestHelper.sendMessageAndReceive(replica1Port, new Message(MessageType.READ_FROM_CLIENT, "x"));
             assertEquals("x", answer.getResource());
             assertEquals("1", answer.getValue());
 
             // Write of client2 on replica2
-            ReplicaHelper.sendMessage(replica2Port, new Message(MessageType.WRITE_FROM_CLIENT, "y", "2"));
+            ReplicaTestHelper.sendMessage(replica2Port, new Message(MessageType.WRITE_FROM_CLIENT, "y", "2"));
             Thread.sleep(100);
 
             // Read of client1 of resource written by client2 (y)
-            answer = ReplicaHelper.sendMessageAndReceive(replica1Port, new Message(MessageType.READ_FROM_CLIENT, "y"));
+            answer = ReplicaTestHelper.sendMessageAndReceive(replica1Port, new Message(MessageType.READ_FROM_CLIENT, "y"));
             assertEquals("y", answer.getResource());
             assertEquals("2", answer.getValue());
 
             // Read of client2 of resource written by client1 (x)
-            answer = ReplicaHelper.sendMessageAndReceive(replica2Port, new Message(MessageType.READ_FROM_CLIENT, "x"));
+            answer = ReplicaTestHelper.sendMessageAndReceive(replica2Port, new Message(MessageType.READ_FROM_CLIENT, "x"));
             assertEquals("x", answer.getResource());
             assertEquals("1", answer.getValue());
 
-            // Closing all replicas
+            // Closing all replicas and tracker
             replica1.interrupt();
             replica2.interrupt();
+            tracker.interrupt();
+        } catch (IOException | ClassNotFoundException | InterruptedException e) {
+            fail();
+        }
+    }
 
-            // Closing tracker
+    // This test runs a lot of clients with only 1 tracker and 1 replica
+    @Test
+    public void clientSpam() {
+        try {
+            // Starting the tracker
+            trackerPort = ReplicaTestHelper.getPort();
+            tracker = new Thread(() -> Tracker.main(new String[]{Integer.toString(trackerPort)}));
+            tracker.start();
+
+            // Starting the replica
+            replica1Port = ReplicaTestHelper.getPort();
+            replica1 = new Thread(() -> Replica.main(new String[]{LOCALHOST, Integer.toString(trackerPort), Integer.toString(replica1Port)}));
+            replica1.start();
+            Thread.sleep(1000);
+
+            // Starting the first client
+            int tempValue = ReplicaTestHelper.getPort();
+            answer = ReplicaTestHelper.sendMessageAndReceive(trackerPort, new Message(MessageType.ADD_CLIENT));
+            assertEquals(replica1Port, answer.getAddress().getPort());
+            ReplicaTestHelper.sendMessage(replica1Port, new Message(MessageType.WRITE_FROM_CLIENT, Integer.toString(tempValue), Integer.toString(tempValue - 1)));
+
+            // Starting N other clients
+            for (int i = 0; i < N; i++) {
+                // Connecting
+                tempValue = ReplicaTestHelper.getPort();
+                answer = ReplicaTestHelper.sendMessageAndReceive(trackerPort, new Message(MessageType.ADD_CLIENT));
+                assertEquals(replica1Port, answer.getAddress().getPort());
+
+                // Writing
+                ReplicaTestHelper.sendMessage(replica1Port, new Message(MessageType.WRITE_FROM_CLIENT, Integer.toString(tempValue), Integer.toString(tempValue - 1)));
+
+                // Reading
+                answer = ReplicaTestHelper.sendMessageAndReceive(replica1Port, new Message(MessageType.READ_FROM_CLIENT, Integer.toString(tempValue - 1)));
+                assertEquals(Integer.toString(tempValue - 1), answer.getResource());
+                assertEquals(Integer.toString(tempValue - 2), answer.getValue());
+            }
+
+            // Closing replica and tracker
+            replica1.interrupt();
+            tracker.interrupt();
+        } catch (IOException | ClassNotFoundException | InterruptedException e) {
+            fail();
+        }
+    }
+
+    // This test runs a lot of replicas with only 1 tracker and 1 client
+    @Test
+    public void replicaSpam() {
+        try {
+            // Starting the tracker
+            trackerPort = ReplicaTestHelper.getPort();
+            tracker = new Thread(() -> Tracker.main(new String[]{Integer.toString(trackerPort)}));
+            tracker.start();
+
+            // Starting the first replica
+            replica1Port = ReplicaTestHelper.getPort();
+            replica1 = new Thread(() -> Replica.main(new String[]{LOCALHOST, Integer.toString(trackerPort), Integer.toString(replica1Port)}));
+            replica1.start();
+            Thread.sleep(100);
+
+            // Starting N other replicas
+            for (int i = 0; i < N; i++) {
+                replica1 = new Thread(() -> Replica.main(new String[]{LOCALHOST, Integer.toString(trackerPort), Integer.toString(ReplicaTestHelper.getPort())}));
+                replica1.start();
+                Thread.sleep(100);
+            }
+
+            // Starting the client
+            answer = ReplicaTestHelper.sendMessageAndReceive(trackerPort, new Message(MessageType.ADD_CLIENT));
+            assertEquals(replica1Port, answer.getAddress().getPort());
+
+            // Write of the client on replica1
+            ReplicaTestHelper.sendMessage(replica1Port, new Message(MessageType.WRITE_FROM_CLIENT, "x", "1"));
+
+            // Read of the client on replica1
+            answer = ReplicaTestHelper.sendMessageAndReceive(replica1Port, new Message(MessageType.READ_FROM_CLIENT, "x"));
+            assertEquals("x", answer.getResource());
+            assertEquals("1", answer.getValue());
+
+            // Closing replica and tracker
+            replica1.interrupt();
             tracker.interrupt();
         } catch (IOException | ClassNotFoundException | InterruptedException e) {
             fail();
