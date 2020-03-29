@@ -22,7 +22,7 @@ public class StateHandler {
         this.replicaAddress = replicaAddress;
     }
 
-    private static int vectorCheck(Map<String, Integer> myVector, Map<String, Integer> newVector, Address from, boolean sameTrackerIndex) {
+    private static int vectorCheck(Map<String, Integer> myVector, Map<String, Integer> newVector, Address from, boolean iKnowMore) {
         for (Map.Entry<String, Integer> entry : newVector.entrySet()) {
             String key = entry.getKey();
             int value = entry.getValue();
@@ -31,7 +31,7 @@ public class StateHandler {
                     return DISCARD;
                 else if (value > myVector.getOrDefault(key, 0) + 1)
                     return ADD_TO_QUEUE;
-            } else if (sameTrackerIndex) {
+            } else if (iKnowMore) {
                 //                here if I don't have key => key exited the network and therefore I have all his update
                 if (myVector.containsKey(key) && value > myVector.get(key))
                     return ADD_TO_QUEUE;
@@ -71,15 +71,15 @@ public class StateHandler {
         return new Update(newVector, replicaAddress, key, value);
     }
 
-    public synchronized void replicaWrite(Update update, boolean sameTrackerIndex) {
+    public synchronized void replicaWrite(Update update, boolean iKnowMore) {
         Map<String, Integer> myVector = state.getVectorClock();
-        int check = vectorCheck(myVector, update.getVectorClock(), update.getFrom(), sameTrackerIndex);
+        int check = vectorCheck(myVector, update.getVectorClock(), update.getFrom(), iKnowMore);
         if (check == ACCEPT) {
             myVector.put(update.getFrom().toString(), myVector.get(update.getFrom().toString()) + 1); // myVector[from] ++
             state.write(myVector, update.getKey(), update.getValue());
             checkUpdateQueue();
         } else if (check == ADD_TO_QUEUE) {
-            state.getQueue().add(new UpdateWithTracker(update, sameTrackerIndex));
+            state.getQueue().add(new UpdateWithTracker(update, iKnowMore));
         }
     }
 

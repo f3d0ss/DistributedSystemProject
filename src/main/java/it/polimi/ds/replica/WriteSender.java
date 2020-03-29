@@ -12,21 +12,24 @@ public class WriteSender extends Thread {
     private Address otherReplica;
     private Update update;
     private List<Address> activeReplicas;
-    private int trackerIndex;
+    private List<Address> otherReplicasBeforeSend;
+    private int outgoingTrackerIndex;
     private TrackerIndexHandler trackerIndexHandler;
 
     /**
-     * @param otherReplica        this is the
-     * @param update              this is the update to be sent
-     * @param activeReplicas      this is used to check other replica is removed from the list of activeReplica
-     * @param trackerIndex
+     * @param otherReplica            this is the
+     * @param update                  this is the update to be sent
+     * @param activeReplicas          this is used to check other replica is removed from the list of activeReplica
+     * @param outgoingTrackerIndex
+     * @param otherReplicasBeforeSend
      * @param trackerIndexHandler
      */
-    public WriteSender(Address otherReplica, Update update, List<Address> activeReplicas, int trackerIndex, TrackerIndexHandler trackerIndexHandler) {
+    public WriteSender(Address otherReplica, Update update, List<Address> activeReplicas, int outgoingTrackerIndex, TrackerIndexHandler trackerIndexHandler, List<Address> otherReplicasBeforeSend) {
         this.otherReplica = otherReplica;
         this.update = update;
         this.activeReplicas = activeReplicas;
-        this.trackerIndex = trackerIndex;
+        this.otherReplicasBeforeSend = otherReplicasBeforeSend;
+        this.outgoingTrackerIndex = outgoingTrackerIndex;
         this.trackerIndexHandler = trackerIndexHandler;
     }
 
@@ -37,22 +40,24 @@ public class WriteSender extends Thread {
     public void run() {
         try {
             TCPClient replica = TCPClient.connect(otherReplica);
-            replica.out().writeObject(new Message(MessageType.UPDATE_FROM_REPLICA, update, trackerIndex));
+            replica.out().writeObject(new Message(MessageType.UPDATE_FROM_REPLICA, update, outgoingTrackerIndex));
             Message reply = (Message) replica.in().readObject();
-            if (reply.getType() == MessageType.WAIT && trackerIndexHandler.addToQueueOrRetryWrite(update, trackerIndex)) {
-                for (Address address : activeReplicas) {
-                    Replica.addMessageToBeSent();
-                    Thread writeSender = new WriteSender(address, update, activeReplicas, trackerIndex, trackerIndexHandler);
-                    writeSender.start();
-                }
+            if (reply.getType() == MessageType.WAIT) {
+                trackerIndexHandler.addToQueueOrRetryWrite(update, outgoingTrackerIndex, reply.getTrackerIndex(), otherReplicasBeforeSend, activeReplicas);
             }
             // otherwise the reply should be an ACK and nothing need to be done
             replica.close();
             Replica.removeMessageToBeSent();
         } catch (IOException | ClassNotFoundException e) {
             logger.log(Level.SEVERE, () -> "Could not update replica " + otherReplica + " properly.");
-            if (activeReplicas.contains(otherReplica))
+            if (activeReplicas.contains(otherReplica)) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                }
                 run();
+            }
         }
     }
 }

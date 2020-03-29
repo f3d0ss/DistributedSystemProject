@@ -7,10 +7,11 @@ import it.polimi.ds.network.Update;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class TrackerIndexHandler {
     private Set<TrackerUpdate> updateFromTrackerQueue;
-    private Set<Update> updateToBeSendQueue;
+    private Set<UpdateToBeSendQueueElements> updateToBeSendQueue;
     private int trackerIndex;
 
     public TrackerIndexHandler(int trackerIndex) {
@@ -35,12 +36,17 @@ public class TrackerIndexHandler {
                 activeReplicas.remove(trackerUpdate.getAddress());
             }
             trackerIndex++;
-            for (Update update : updateToBeSendQueue) {
-                updateToBeSendQueue.remove(update);
-                for (Address replica : activeReplicas) {
+            for (UpdateToBeSendQueueElements updateToBeSendQueueElement : updateToBeSendQueue) {
+                List<Address> newReplicas = activeReplicas.stream().filter(address -> !updateToBeSendQueueElement.getOtherReplicasAlreadySent().contains(address)).collect(Collectors.toList());
+                updateToBeSendQueueElement.getOtherReplicasAlreadySent().addAll(newReplicas);
+                for (Address address : newReplicas) {
                     Replica.addMessageToBeSent();
-                    Thread writeSender = new WriteSender(replica, update, activeReplicas, trackerIndex, this);
+                    Thread writeSender = new WriteSender(address, updateToBeSendQueueElement.getUpdate(), activeReplicas, this.trackerIndex, this, updateToBeSendQueueElement.getOtherReplicasAlreadySent());
                     writeSender.start();
+                }
+
+                if (updateToBeSendQueueElement.getIncomingTrackerIndex() <= this.trackerIndex) {
+                    updateToBeSendQueue.remove(updateToBeSendQueueElement);
                 }
             }
             for (TrackerUpdate queuedTrackerUpdate : updateFromTrackerQueue) {
@@ -54,13 +60,14 @@ public class TrackerIndexHandler {
      * @param update
      * @param incomingTrackerIndex
      * @param state
-     * @return true if Update will be handle, false if need to send `wait`
+     * @return my trackerIndex if the incoming is less then mine, 0 otherwise
      */
-    public synchronized boolean checkTrackerIndexAndExecuteUpdate(Update update, int incomingTrackerIndex, StateHandler state) {
-        if (incomingTrackerIndex < this.trackerIndex)
-            return false;
-        state.replicaWrite(update, incomingTrackerIndex == this.trackerIndex);
-        return true;
+    public synchronized int checkTrackerIndexAndExecuteUpdate(Update update, int incomingTrackerIndex, StateHandler state) {
+        state.replicaWrite(update, incomingTrackerIndex <= this.trackerIndex);
+        if (incomingTrackerIndex < this.trackerIndex) {
+            return this.trackerIndex;
+        }
+        return 0;
 
     }
 
@@ -75,17 +82,55 @@ public class TrackerIndexHandler {
      *
      * @param update
      * @param incomingTrackerIndex
+     * @param outgoingTrackerIndex
+     * @param otherReplicasBeforeSend
      * @return true if you can resend the update
      */
-    public synchronized boolean addToQueueOrRetryWrite(Update update, int incomingTrackerIndex) {
-        if (this.trackerIndex > incomingTrackerIndex)
-            return true;
-        updateToBeSendQueue.add(update);
-        return false;
+    public synchronized void addToQueueOrRetryWrite(Update update, int outgoingTrackerIndex, int incomingTrackerIndex, List<Address> otherReplicasBeforeSend, List<Address> activeReplicas) {
+        if (this.trackerIndex > outgoingTrackerIndex) {
+            // here only if the message can be sent immediately
+            // check to which client to send
+            List<Address> newReplicas = activeReplicas.stream().filter(address -> !otherReplicasBeforeSend.contains(address)).collect(Collectors.toList());
+            otherReplicasBeforeSend.addAll(newReplicas);
+            for (Address address : newReplicas) {
+                Replica.addMessageToBeSent();
+                Thread writeSender = new WriteSender(address, update, activeReplicas, outgoingTrackerIndex + 1, this, otherReplicasBeforeSend);
+                writeSender.start();
+            }
+
+            if (incomingTrackerIndex <= outgoingTrackerIndex + 1) {
+                return;
+            }
+        }
+        updateToBeSendQueue.add(new UpdateToBeSendQueueElements(update, otherReplicasBeforeSend, incomingTrackerIndex));
     }
 
     public boolean isOutgoingQueueEmpty() {
         return updateToBeSendQueue.isEmpty();
+    }
+
+    private class UpdateToBeSendQueueElements {
+        private Update update;
+        private List<Address> otherReplicasAlreadySent;
+        private int incomingTrackerIndex;
+
+        public UpdateToBeSendQueueElements(Update update, List<Address> otherReplicasAlreadySent, int incomingTrackerIndex) {
+            this.update = update;
+            this.otherReplicasAlreadySent = otherReplicasAlreadySent;
+            this.incomingTrackerIndex = incomingTrackerIndex;
+        }
+
+        public Update getUpdate() {
+            return update;
+        }
+
+        public List<Address> getOtherReplicasAlreadySent() {
+            return otherReplicasAlreadySent;
+        }
+
+        public int getIncomingTrackerIndex() {
+            return incomingTrackerIndex;
+        }
     }
 
 }

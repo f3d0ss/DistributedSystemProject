@@ -101,7 +101,7 @@ public enum MessageType {
     WAIT {
         @Override
         public String hasPayload() {
-            return null;
+            return TRACKER_INDEX;
         }
     },
     ACK {

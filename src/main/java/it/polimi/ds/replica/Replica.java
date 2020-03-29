@@ -212,10 +212,11 @@ public class Replica {
                             client.out().writeObject(new Message(MessageType.WAIT));
                         break;
                     case UPDATE_FROM_REPLICA:
-                        if (updateFromReplica(inputMessage.getUpdate(), inputMessage.getTrackerIndex()))
+                        int trackerIndex = updateFromReplica(inputMessage.getUpdate(), inputMessage.getTrackerIndex());
+                        if (trackerIndex == 0)
                             client.out().writeObject(new Message(MessageType.ACK));
                         else
-                            client.out().writeObject(new Message(MessageType.WAIT));
+                            client.out().writeObject(new Message(MessageType.WAIT, trackerIndex));
                         break;
                     case GET_STATE:
                         ReplicaState outgoingState = getReplicaState(inputMessage.getTrackerIndex(), state);
@@ -251,6 +252,7 @@ public class Replica {
             logger.log(Level.INFO, () -> "Successfully wrote resource " + resource + " with value " + value);
             // Get indexTracker (because not send to new replicas)
             int trackerIndex = trackerIndexHandler.getTrackerIndex();
+            List<Address> otherReplicaBeforeSend = new ArrayList<>(otherReplicaAddresses);
 /*          here after reading the trackerIndex a thread could increment it and update the otherReplicaAddress,
             we don't care, because if it was updated by an Exit from another replica it'ok if we don't send the update to the exited replica (would be check later otherwise)
             if it was updated by a Join we will simply send the update to the new replica who will reply with `wait` causing the resend of the message, no biggy
@@ -258,7 +260,7 @@ public class Replica {
             Replica.addMessageToBeSent();
             for (Address address : otherReplicaAddresses) {
                 Replica.addMessageToBeSent();
-                Thread writeSender = new WriteSender(address, update, otherReplicaAddresses, trackerIndex, trackerIndexHandler);
+                Thread writeSender = new WriteSender(address, update, otherReplicaAddresses, trackerIndex, trackerIndexHandler, otherReplicaBeforeSend);
                 writeSender.start();
             }
             Replica.removeMessageToBeSent();
@@ -268,14 +270,12 @@ public class Replica {
         /**
          * @param update
          * @param incomingTrackerIndex
-         * @return true if updateTaken, false otherwise
+         * @return my trackerIndex if the incoming is less then mine, 0 otherwise
          */
-        private boolean updateFromReplica(Update update, int incomingTrackerIndex) {
+        private int updateFromReplica(Update update, int incomingTrackerIndex) {
             /*  Check the incoming trackerIndex ITI, if:
-                ITI > my trackerIndex MTI then put the message in `updates from replicas waiting for T` queue
-                            (maybe could be processed thanks to assumption `before exit finish propagate update`, TOTHINK)
-                            no, because if myVectorClock not contain X I don't know
-                ITI < MTI then reply with `wait` message
+                ITI > my trackerIndex MTI then execute considering that sender know more than me
+                ITI < MTI then reply with `wait` message and execute knowing that the sender know less than me
                 ITI = MTI then process then execute state.replicaWrite
                 NOTE: check ITI = MTI and execute state.replicaWrite should be atomic, otherwise after the check and before the replicaWrite
                 the replica could receive a Join from the Tracker and give his state to the neo joined Replica
