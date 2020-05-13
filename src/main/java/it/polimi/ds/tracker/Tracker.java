@@ -1,9 +1,6 @@
 package it.polimi.ds.tracker;
 
-import it.polimi.ds.network.Address;
-import it.polimi.ds.network.Message;
-import it.polimi.ds.network.MessageType;
-import it.polimi.ds.network.TCPClient;
+import it.polimi.ds.network.*;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -17,11 +14,21 @@ import java.util.logging.Logger;
 public class Tracker {
     private static final Logger logger = Logger.getLogger("Tracker");
     private ServerSocket serverSocket;
-    private Storage storage = new Storage();
+    private final Storage storage = new Storage();
+    private static int minDelay = 0;
+    private static int maxDelay = 0;
 
     public static void main(String[] args) {
         Tracker tracker = new Tracker();
-        tracker.start(args[0]);
+        if(args.length >= 3)
+            tracker.start(args[0], Integer.parseInt(args[1]), Integer.parseInt(args[2]));
+        else if(args.length >= 1)
+            tracker.start(args[0]);
+        else {
+            logger.log(Level.SEVERE, "Too few arguments, tracker was not launched.");
+            logger.log(Level.SEVERE, () -> "Please relaunch the tracker with" +
+                    "<trackerPort> [<minDelay> <maxDelay>] as parameters.");
+        }
     }
 
     private static int getChoice() {
@@ -31,6 +38,22 @@ public class Tracker {
         } catch (NumberFormatException | IOException e) {
             return -1;
         }
+    }
+
+    private static void setMinDelay(int minDelay) {
+        if(minDelay > 0 && minDelay <= Tracker.maxDelay)
+            Tracker.minDelay = minDelay;
+    }
+
+    private static void setMaxDelay(int maxDelay) {
+        if(maxDelay > 0)
+            Tracker.maxDelay = maxDelay;
+    }
+
+    private void start(String port, int minDelay, int maxDelay) {
+        Tracker.setMaxDelay(maxDelay);
+        Tracker.setMinDelay(minDelay);
+        this.start(port);
     }
 
     private void start(String port) {
@@ -70,8 +93,8 @@ public class Tracker {
     }
 
     private static class ClientHandler extends Thread {
-        private Socket clientSocket;
-        private Storage storage;
+        private final Socket clientSocket;
+        private final Storage storage;
 
         public ClientHandler(Socket socket, Storage storage) {
             this.clientSocket = socket;
@@ -95,9 +118,11 @@ public class Tracker {
                         for (Address address : otherReplicas) {
                             new MessageSender(new Message(MessageType.SEND_NEW_REPLICA, inputMessage.getAddress(), newTrackerIndex), address).start();
                         }
+                        SimulateDelay.uniform(minDelay, maxDelay);
                         replica.out().writeObject(new Message(MessageType.SEND_OTHER_REPLICAS, otherReplicas, newTrackerIndex));
                         break;
                     case ADD_CLIENT:
+                        SimulateDelay.uniform(minDelay, maxDelay);
                         replica.out().writeObject(new Message(MessageType.SEND_REPLICA, storage.addClient()));
                         break;
                     case REMOVE_REPLICA:
@@ -127,8 +152,8 @@ public class Tracker {
     }
 
     private static class MessageSender extends Thread {
-        private Message message;
-        private Address to;
+        private final Message message;
+        private final Address to;
 
         public MessageSender(Message message, Address to) {
             this.message = message;
@@ -139,12 +164,13 @@ public class Tracker {
         public void run() {
             while (true) {
                 try {
+                    SimulateDelay.uniform(minDelay, maxDelay);
                     TCPClient currentOtherReplica = TCPClient.connect(to);
                     currentOtherReplica.out().writeObject(message);
                     currentOtherReplica.close();
                     return;
                 } catch (IOException e) {
-                    logger.log(Level.WARNING, Thread.currentThread().toString() + ": Communication with replica " + to + " interrupted, retrying.");
+                    logger.log(Level.WARNING, () -> Thread.currentThread().toString() + ": Communication with replica " + to + " interrupted, retrying.");
                     try {
                         Thread.sleep(1000);
                     } catch (InterruptedException ex) {

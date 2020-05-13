@@ -19,16 +19,26 @@ import java.util.logging.Logger;
 public class Replica {
     private static final Logger logger = Logger.getLogger("Replica");
     private static final AtomicInteger messagesLeftToSend = new AtomicInteger(0);
-    private static AtomicBoolean isReplicaClosing = new AtomicBoolean(false);
+    private static final AtomicBoolean isReplicaClosing = new AtomicBoolean(false);
     private Address replicaAddress;
     private List<Address> otherReplicaAddresses;
     private StateHandler state;
     private ServerSocket serverSocket;
     private TrackerIndexHandler trackerIndexHandler;     //need to be shared
+    protected static int minDelay = 0;
+    protected static int maxDelay = 0;
 
     public static void main(String[] args) {
-        Replica tracker = new Replica();
-        tracker.start(args[0], args[1], args[2]);
+        Replica replica = new Replica();
+        if(args.length >= 5)
+            replica.start(args[0], args[1], args[2], Integer.parseInt(args[3]), Integer.parseInt(args[4]));
+        else if(args.length >= 3)
+            replica.start(args[0], args[1], args[2]);
+        else {
+            logger.log(Level.SEVERE, "Too few arguments, replica was not launched.");
+            logger.log(Level.SEVERE,() -> "Please relaunch the replica with" +
+                    "<trackerIP> <trackerPort> <replicaPort> [<minDelay> <maxDelay>] as parameters.");
+        }
     }
 
     private static int getChoice() {
@@ -60,6 +70,22 @@ public class Replica {
         Replica.isReplicaClosing.set(true);
     }
 
+    private static void setMinDelay(int minDelay) {
+        if(minDelay > 0 && minDelay <= Replica.maxDelay)
+            Replica.minDelay = minDelay;
+    }
+
+    private static void setMaxDelay(int maxDelay) {
+        if(maxDelay > 0)
+            Replica.maxDelay = maxDelay;
+    }
+
+    public void start(String trackerIp, String trackerPort, String replicaPort, int minDelay, int maxDelay) {
+        Replica.setMaxDelay(maxDelay);
+        Replica.setMinDelay(minDelay);
+        this.start(trackerIp, trackerPort, replicaPort);
+    }
+
     public void start(String trackerIp, String trackerPort, String replicaPort) {
         Address trackerAddress = new Address(trackerIp, Integer.valueOf(trackerPort));
         try {
@@ -69,6 +95,7 @@ public class Replica {
         }
         while (trackerIndexHandler == null) {
             try {
+                SimulateDelay.uniform(minDelay, maxDelay);
                 trackerIndexHandler = joinNetwork(TCPClient.connect(trackerAddress));
             } catch (IOException e) {
                 logger.log(Level.WARNING, "Impossible to contact the tracker, retrying.");
@@ -90,6 +117,7 @@ public class Replica {
         for (int i = 0; state == null; i++) {
             Address otherReplica = otherReplicaAddresses.get(i % otherReplicaAddresses.size());
             try {
+                SimulateDelay.uniform(minDelay, maxDelay);
                 state = getState(TCPClient.connect(otherReplica), trackerIndexHandler.getTrackerIndex());
             } catch (IOException | ClassNotFoundException e) {
                 logger.log(Level.WARNING, () -> "Impossible to get a valid state from " + otherReplicaAddresses + ", trying an other one.");
@@ -132,6 +160,7 @@ public class Replica {
 
     private void exitNetwork(Address trackerAddress) {
         try {
+            SimulateDelay.uniform(minDelay, maxDelay);
             TCPClient tracker = TCPClient.connect(trackerAddress);
             tracker.out().writeObject(new Message(MessageType.REMOVE_REPLICA, replicaAddress));
             tracker.close();
@@ -180,9 +209,9 @@ public class Replica {
 
     private static class IncomingMessageHandler extends Thread {
         private List<Address> otherReplicaAddresses;
-        private Socket clientSocket;
-        private StateHandler state;
-        private TrackerIndexHandler trackerIndexHandler;
+        private final Socket clientSocket;
+        private final StateHandler state;
+        private final TrackerIndexHandler trackerIndexHandler;
 
         public IncomingMessageHandler(List<Address> otherReplicaAddresses, Socket socket, StateHandler state, TrackerIndexHandler trackerIndexHandler) {
             this.otherReplicaAddresses = new ArrayList<>(otherReplicaAddresses);
@@ -199,12 +228,14 @@ public class Replica {
                 Message inputMessage = (Message) client.in().readObject();
                 switch (inputMessage.getType()) {
                     case READ_FROM_CLIENT:
+                        SimulateDelay.uniform(minDelay, maxDelay);
                         if (Replica.replicaIsNotClosing())
                             client.out().writeObject(readFromClient(inputMessage.getResource()));
                         else
                             client.out().writeObject(new Message(MessageType.READ_ANSWER, null, null));
                         break;
                     case WRITE_FROM_CLIENT:
+                        SimulateDelay.uniform(minDelay, maxDelay);
                         if (Replica.replicaIsNotClosing()) {
                             writeFromClient(inputMessage.getResource(), inputMessage.getValue());
                             client.out().writeObject(new Message(MessageType.ACK));
@@ -213,6 +244,7 @@ public class Replica {
                         break;
                     case UPDATE_FROM_REPLICA:
                         int trackerIndex = updateFromReplica(inputMessage.getUpdate(), inputMessage.getTrackerIndex());
+                        SimulateDelay.uniform(minDelay, maxDelay);
                         if (trackerIndex == 0)
                             client.out().writeObject(new Message(MessageType.ACK));
                         else
@@ -220,6 +252,7 @@ public class Replica {
                         break;
                     case GET_STATE:
                         ReplicaState outgoingState = getReplicaState(inputMessage.getTrackerIndex(), state);
+                        SimulateDelay.uniform(minDelay, maxDelay);
                         if (outgoingState == null)
                             client.out().writeObject(new Message(MessageType.NOT_STATE));
                         else

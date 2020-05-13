@@ -9,12 +9,12 @@ import java.util.logging.Logger;
 
 public class WriteSender extends Thread {
     private static final Logger logger = Logger.getLogger("WriteSender");
-    private Address otherReplica;
-    private Update update;
-    private List<Address> activeReplicas;
-    private List<Address> otherReplicasBeforeSend;
-    private int outgoingTrackerIndex;
-    private TrackerIndexHandler trackerIndexHandler;
+    private final Address otherReplica;
+    private final Update update;
+    private final List<Address> activeReplicas;
+    private final List<Address> otherReplicasBeforeSend;
+    private final int outgoingTrackerIndex;
+    private final TrackerIndexHandler trackerIndexHandler;
 
     /**
      * @param otherReplica            this is the
@@ -39,6 +39,7 @@ public class WriteSender extends Thread {
     @Override
     public void run() {
         try {
+            SimulateDelay.uniform(Replica.minDelay, Replica.maxDelay);
             TCPClient replica = TCPClient.connect(otherReplica);
             replica.out().writeObject(new Message(MessageType.UPDATE_FROM_REPLICA, update, outgoingTrackerIndex));
             Message reply = (Message) replica.in().readObject();
