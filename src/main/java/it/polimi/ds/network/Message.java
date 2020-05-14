@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.List;
 
 public class Message implements Serializable {
-    private MessageType type;
+    private final MessageType type;
     private Address address;
     private List<Address> addressSet;
     private String resource;

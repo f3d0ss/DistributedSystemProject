@@ -12,11 +12,11 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 class ReplicaTest {
     private static final String LOCALHOST = "127.0.0.1";
-    private static int N = 5;
+    private static final int N = 5;
+    private static Thread tracker, replica1, replica2;
     private int trackerPort;
     private int replica1Port;
     private int replica2Port;
-    private static Thread tracker, replica1, replica2;
     private Message answer;
 
     // This test runs the replicas in a base case scenario with 1 tracker, 2 replicas and 2 clients

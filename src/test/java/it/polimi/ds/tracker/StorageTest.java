@@ -8,7 +8,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class StorageTest {
-    private Storage storage = new Storage();
+    private final Storage storage = new Storage();
 
     @Test
     public void testAddReplica() {

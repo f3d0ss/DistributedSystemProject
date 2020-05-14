@@ -10,8 +10,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class Storage extends ReentrantLock {
-    private Map<String, Integer> replicas;
-    private AtomicInteger trackerIndex = new AtomicInteger(0);
+    private final Map<String, Integer> replicas;
+    private final AtomicInteger trackerIndex = new AtomicInteger(0);
 
     public Storage() {
         this.replicas = new HashMap<>();

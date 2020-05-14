@@ -18,9 +18,9 @@ public class Client {
 
     private Client(String serverIP, String serverPort, int minDelay, int maxDelay) {
         this(serverIP, serverPort);
-        if(maxDelay > 0)
+        if (maxDelay > 0)
             this.maxDelay = maxDelay;
-        if(minDelay > 0 && minDelay <= this.maxDelay)
+        if (minDelay > 0 && minDelay <= this.maxDelay)
             this.minDelay = minDelay;
     }
 
@@ -30,9 +30,9 @@ public class Client {
 
     public static void main(String[] args) {
         Client client;
-        if(args.length >= 4)
+        if (args.length >= 4)
             client = new Client(args[0], args[1], Integer.parseInt(args[2]), Integer.parseInt(args[3]));
-        else if(args.length >= 2)
+        else if (args.length >= 2)
             client = new Client(args[0], args[1]);
         else {
             logger.log(Level.SEVERE, "Too few arguments, client was not launched.");
@@ -40,10 +40,10 @@ public class Client {
                     "[<minDelay> <maxDelay>] <serverIP> <serverPort> as parameters.");
             return;
         }
-            welcomeMessage();
-            while (!done)
-                client.start();
-            logger.log(Level.INFO, "This client is now closed.");
+        welcomeMessage();
+        while (!done)
+            client.start();
+        logger.log(Level.INFO, "This client is now closed.");
     }
 
     private static void setDone() {

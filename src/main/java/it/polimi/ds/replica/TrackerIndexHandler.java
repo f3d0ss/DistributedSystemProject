@@ -10,8 +10,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class TrackerIndexHandler {
-    private Set<TrackerUpdate> updateFromTrackerQueue;
-    private Set<UpdateToBeSendQueueElements> updateToBeSendQueue;
+    private final Set<TrackerUpdate> updateFromTrackerQueue;
+    private final Set<UpdateToBeSendQueueElements> updateToBeSendQueue;
     private int trackerIndex;
 
     public TrackerIndexHandler(int trackerIndex) {
@@ -110,9 +110,9 @@ public class TrackerIndexHandler {
     }
 
     private class UpdateToBeSendQueueElements {
-        private Update update;
-        private List<Address> otherReplicasAlreadySent;
-        private int incomingTrackerIndex;
+        private final Update update;
+        private final List<Address> otherReplicasAlreadySent;
+        private final int incomingTrackerIndex;
 
         public UpdateToBeSendQueueElements(Update update, List<Address> otherReplicasAlreadySent, int incomingTrackerIndex) {
             this.update = update;

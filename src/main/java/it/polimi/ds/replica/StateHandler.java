@@ -12,10 +12,8 @@ public class StateHandler {
     public static final int DISCARD = -1;
     public static final int ADD_TO_QUEUE = 0;
     public static final int ACCEPT = 1;
-
+    private final Address replicaAddress;
     private ReplicaState state;
-
-    private Address replicaAddress;
 
     public StateHandler(ReplicaState state, Address replicaAddress) {
         this.state = state;

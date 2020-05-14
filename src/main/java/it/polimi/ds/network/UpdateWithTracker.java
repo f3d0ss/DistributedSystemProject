@@ -3,8 +3,8 @@ package it.polimi.ds.network;
 import java.io.Serializable;
 
 public class UpdateWithTracker implements Serializable, Comparable {
-    private Update update;
-    private boolean sameTrackerIndex;
+    private final Update update;
+    private final boolean sameTrackerIndex;
 
     public UpdateWithTracker(Update update, boolean sameTrackerIndex) {
         this.update = update;

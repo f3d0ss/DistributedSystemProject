@@ -13,16 +13,16 @@ import java.util.logging.Logger;
 
 public class Tracker {
     private static final Logger logger = Logger.getLogger("Tracker");
-    private ServerSocket serverSocket;
-    private final Storage storage = new Storage();
     private static int minDelay = 0;
     private static int maxDelay = 0;
+    private final Storage storage = new Storage();
+    private ServerSocket serverSocket;
 
     public static void main(String[] args) {
         Tracker tracker = new Tracker();
-        if(args.length >= 3)
+        if (args.length >= 3)
             tracker.start(args[0], Integer.parseInt(args[1]), Integer.parseInt(args[2]));
-        else if(args.length >= 1)
+        else if (args.length >= 1)
             tracker.start(args[0]);
         else {
             logger.log(Level.SEVERE, "Too few arguments, tracker was not launched.");
@@ -41,12 +41,12 @@ public class Tracker {
     }
 
     private static void setMinDelay(int minDelay) {
-        if(minDelay > 0 && minDelay <= Tracker.maxDelay)
+        if (minDelay > 0 && minDelay <= Tracker.maxDelay)
             Tracker.minDelay = minDelay;
     }
 
     private static void setMaxDelay(int maxDelay) {
-        if(maxDelay > 0)
+        if (maxDelay > 0)
             Tracker.maxDelay = maxDelay;
     }
 

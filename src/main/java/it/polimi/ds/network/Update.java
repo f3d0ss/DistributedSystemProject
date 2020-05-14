@@ -4,10 +4,10 @@ import java.io.Serializable;
 import java.util.Map;
 
 public class Update implements Serializable, Comparable {
-    private Map<String, Integer> vectorClock;
-    private Address from;
-    private String key;
-    private String value;
+    private final Map<String, Integer> vectorClock;
+    private final Address from;
+    private final String key;
+    private final String value;
 
     public Update(Map<String, Integer> vectorClock, Address from, String key, String value) {
         this.vectorClock = vectorClock;

@@ -12,11 +12,12 @@ public class SimulateDelay {
     }
 
     public static void fixed(int delay) {
-        try {
-            Thread.sleep(delay);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+        if (delay > 0)
+            try {
+                Thread.sleep(delay);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
     }
 
     public static void fixed() {
@@ -24,9 +25,9 @@ public class SimulateDelay {
     }
 
     public static void uniform(int from, int to) {
-        if(to > from)
+        if (to > from)
             try {
-                Thread.sleep((long)rand.nextInt(to - from) + to);
+                Thread.sleep((long) rand.nextInt(to - from) + to);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }

@@ -7,9 +7,9 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 
 public class ReplicaState implements Serializable {
+    private final Map<String, String> store;
+    private final Queue<UpdateWithTracker> queue;
     private Map<String, Integer> vectorClock;
-    private Map<String, String> store;
-    private Queue<UpdateWithTracker> queue;
 
     public ReplicaState(Address myAddress) {
         vectorClock = new HashMap<>();

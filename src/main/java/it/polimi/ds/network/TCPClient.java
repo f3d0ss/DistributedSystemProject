@@ -11,9 +11,9 @@ import java.util.logging.Logger;
 public class TCPClient {
 
     private static final Logger logger = Logger.getLogger("TCPClient");
-    private Socket connectedSocket;
-    private ObjectInputStream in;
-    private ObjectOutputStream out;
+    private final Socket connectedSocket;
+    private final ObjectInputStream in;
+    private final ObjectOutputStream out;
 
     public TCPClient(Socket connectedSocket) throws IOException {
         if (!connectedSocket.isConnected())

@@ -20,23 +20,23 @@ public class Replica {
     private static final Logger logger = Logger.getLogger("Replica");
     private static final AtomicInteger messagesLeftToSend = new AtomicInteger(0);
     private static final AtomicBoolean isReplicaClosing = new AtomicBoolean(false);
+    protected static int minDelay = 0;
+    protected static int maxDelay = 0;
     private Address replicaAddress;
     private List<Address> otherReplicaAddresses;
     private StateHandler state;
     private ServerSocket serverSocket;
     private TrackerIndexHandler trackerIndexHandler;     //need to be shared
-    protected static int minDelay = 0;
-    protected static int maxDelay = 0;
 
     public static void main(String[] args) {
         Replica replica = new Replica();
-        if(args.length >= 5)
+        if (args.length >= 5)
             replica.start(args[0], args[1], args[2], Integer.parseInt(args[3]), Integer.parseInt(args[4]));
-        else if(args.length >= 3)
+        else if (args.length >= 3)
             replica.start(args[0], args[1], args[2]);
         else {
             logger.log(Level.SEVERE, "Too few arguments, replica was not launched.");
-            logger.log(Level.SEVERE,() -> "Please relaunch the replica with" +
+            logger.log(Level.SEVERE, () -> "Please relaunch the replica with" +
                     "<trackerIP> <trackerPort> <replicaPort> [<minDelay> <maxDelay>] as parameters.");
         }
     }
@@ -71,12 +71,12 @@ public class Replica {
     }
 
     private static void setMinDelay(int minDelay) {
-        if(minDelay > 0 && minDelay <= Replica.maxDelay)
+        if (minDelay > 0 && minDelay <= Replica.maxDelay)
             Replica.minDelay = minDelay;
     }
 
     private static void setMaxDelay(int maxDelay) {
-        if(maxDelay > 0)
+        if (maxDelay > 0)
             Replica.maxDelay = maxDelay;
     }
 
@@ -208,10 +208,10 @@ public class Replica {
     }
 
     private static class IncomingMessageHandler extends Thread {
-        private List<Address> otherReplicaAddresses;
         private final Socket clientSocket;
         private final StateHandler state;
         private final TrackerIndexHandler trackerIndexHandler;
+        private List<Address> otherReplicaAddresses;
 
         public IncomingMessageHandler(List<Address> otherReplicaAddresses, Socket socket, StateHandler state, TrackerIndexHandler trackerIndexHandler) {
             this.otherReplicaAddresses = new ArrayList<>(otherReplicaAddresses);
