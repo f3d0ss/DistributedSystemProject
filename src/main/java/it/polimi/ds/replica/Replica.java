@@ -235,12 +235,14 @@ public class Replica {
                             client.out().writeObject(new Message(MessageType.READ_ANSWER, null, null));
                         break;
                     case WRITE_FROM_CLIENT:
-                        SimulateDelay.uniform(minDelay, maxDelay);
                         if (Replica.replicaIsNotClosing()) {
                             writeFromClient(inputMessage.getResource(), inputMessage.getValue());
+                            SimulateDelay.uniform(minDelay, maxDelay);
                             client.out().writeObject(new Message(MessageType.ACK));
-                        } else
+                        } else {
+                            SimulateDelay.uniform(minDelay, maxDelay);
                             client.out().writeObject(new Message(MessageType.WAIT));
+                        }
                         break;
                     case UPDATE_FROM_REPLICA:
                         int trackerIndex = updateFromReplica(inputMessage.getUpdate(), inputMessage.getTrackerIndex());

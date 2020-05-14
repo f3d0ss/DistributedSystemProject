@@ -37,7 +37,7 @@ public class Client {
         else {
             logger.log(Level.SEVERE, "Too few arguments, client was not launched.");
             logger.log(Level.SEVERE, () -> "Please launch the client with" +
-                    "[<minDelay> <maxDelay>] <serverIP> <serverPort> as parameters.");
+                    "<serverIP> <serverPort> [<minDelay> <maxDelay>] as parameters.");
             return;
         }
         welcomeMessage();

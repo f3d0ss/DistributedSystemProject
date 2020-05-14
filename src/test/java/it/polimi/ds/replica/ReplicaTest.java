@@ -2,6 +2,7 @@ package it.polimi.ds.replica;
 
 import it.polimi.ds.network.Message;
 import it.polimi.ds.network.MessageType;
+import it.polimi.ds.network.SimulateDelay;
 import it.polimi.ds.tracker.Tracker;
 import org.junit.jupiter.api.Test;
 
@@ -32,13 +33,13 @@ class ReplicaTest {
             replica1Port = ReplicaTestHelper.getPort();
             replica1 = new Thread(() -> Replica.main(new String[]{LOCALHOST, Integer.toString(trackerPort), Integer.toString(replica1Port)}));
             replica1.start();
-            Thread.sleep(100);
+            SimulateDelay.fixed(100);
 
             // Starting the second replica
             replica2Port = ReplicaTestHelper.getPort();
             replica2 = new Thread(() -> Replica.main(new String[]{LOCALHOST, Integer.toString(trackerPort), Integer.toString(replica2Port)}));
             replica2.start();
-            Thread.sleep(100);
+            SimulateDelay.fixed(100);
 
             // Starting the first client
             answer = ReplicaTestHelper.sendMessageAndReceive(trackerPort, new Message(MessageType.ADD_CLIENT));
@@ -47,7 +48,7 @@ class ReplicaTest {
             // Starting  the second client
             answer = ReplicaTestHelper.sendMessageAndReceive(trackerPort, new Message(MessageType.ADD_CLIENT));
             assertEquals(replica2Port, answer.getAddress().getPort());
-            Thread.sleep(100);
+            SimulateDelay.fixed(100);
 
             // Write of client1 on replica1
             ReplicaTestHelper.sendMessage(replica1Port, new Message(MessageType.WRITE_FROM_CLIENT, "x", "1"));
@@ -59,7 +60,7 @@ class ReplicaTest {
 
             // Write of client2 on replica2
             ReplicaTestHelper.sendMessage(replica2Port, new Message(MessageType.WRITE_FROM_CLIENT, "y", "2"));
-            Thread.sleep(100);
+            SimulateDelay.fixed(100);
 
             // Read of client1 of resource written by client2 (y)
             answer = ReplicaTestHelper.sendMessageAndReceive(replica1Port, new Message(MessageType.READ_FROM_CLIENT, "y"));
@@ -75,7 +76,7 @@ class ReplicaTest {
             replica1.interrupt();
             replica2.interrupt();
             tracker.interrupt();
-        } catch (IOException | ClassNotFoundException | InterruptedException e) {
+        } catch (IOException | ClassNotFoundException e) {
             fail();
         }
     }
@@ -93,7 +94,7 @@ class ReplicaTest {
             replica1Port = ReplicaTestHelper.getPort();
             replica1 = new Thread(() -> Replica.main(new String[]{LOCALHOST, Integer.toString(trackerPort), Integer.toString(replica1Port)}));
             replica1.start();
-            Thread.sleep(1000);
+            SimulateDelay.fixed(1000);
 
             // Starting the first client
             int tempValue = ReplicaTestHelper.getPort();
@@ -120,7 +121,7 @@ class ReplicaTest {
             // Closing replica and tracker
             replica1.interrupt();
             tracker.interrupt();
-        } catch (IOException | ClassNotFoundException | InterruptedException e) {
+        } catch (IOException | ClassNotFoundException e) {
             fail();
         }
     }
@@ -138,13 +139,13 @@ class ReplicaTest {
             replica1Port = ReplicaTestHelper.getPort();
             replica1 = new Thread(() -> Replica.main(new String[]{LOCALHOST, Integer.toString(trackerPort), Integer.toString(replica1Port)}));
             replica1.start();
-            Thread.sleep(100);
+            SimulateDelay.fixed(100);
 
             // Starting N other replicas
             for (int i = 0; i < N; i++) {
                 replica1 = new Thread(() -> Replica.main(new String[]{LOCALHOST, Integer.toString(trackerPort), Integer.toString(ReplicaTestHelper.getPort())}));
                 replica1.start();
-                Thread.sleep(100);
+                SimulateDelay.fixed(100);
             }
 
             // Starting the client
@@ -162,7 +163,7 @@ class ReplicaTest {
             // Closing replica and tracker
             replica1.interrupt();
             tracker.interrupt();
-        } catch (IOException | ClassNotFoundException | InterruptedException e) {
+        } catch (IOException | ClassNotFoundException e) {
             fail();
         }
     }
