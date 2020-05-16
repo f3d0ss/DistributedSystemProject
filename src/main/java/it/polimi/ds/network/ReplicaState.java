@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Queue;
 
+// TODO JavaDoc
 public class ReplicaState implements Serializable {
     private final Map<String, String> store;
     private final Queue<UpdateWithTracker> queue;

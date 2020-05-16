@@ -11,6 +11,9 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Represent the main Server, which keeps track of all the Replicas in the network.
+ */
 public class Tracker {
     private static final Logger logger = Logger.getLogger("Tracker");
     private static int minDelay = 0;
@@ -92,6 +95,9 @@ public class Tracker {
         }
     }
 
+    /**
+     * Represent the Thread that will handle the various requests of both Replicas and Clients.
+     */
     private static class ClientHandler extends Thread {
         private final Socket clientSocket;
         private final Storage storage;
@@ -151,6 +157,9 @@ public class Tracker {
         }
     }
 
+    /**
+     * Represent the Thread that will broadcast the Messages regarding insertion or deletion of Replicas.
+     */
     private static class MessageSender extends Thread {
         private final Message message;
         private final Address to;

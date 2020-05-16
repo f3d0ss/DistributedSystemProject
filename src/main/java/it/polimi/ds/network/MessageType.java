@@ -1,5 +1,8 @@
 package it.polimi.ds.network;
 
+/**
+ * Contains the various type of Messages that can be sent among entities.
+ */
 public enum MessageType {
     ADD_REPLICA {
         @Override

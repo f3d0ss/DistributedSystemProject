@@ -8,6 +8,10 @@ import java.nio.channels.NotYetConnectedException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Represent a generic socket connection between two entities.
+ * Gives several methods to easily communicates through Objects.
+ */
 public class TCPClient {
 
     private static final Logger logger = Logger.getLogger("TCPClient");

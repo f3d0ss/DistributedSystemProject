@@ -1,8 +1,10 @@
 package it.polimi.ds.network;
 
 import java.io.Serializable;
+import java.util.Objects;
 
-public class UpdateWithTracker implements Serializable, Comparable {
+// TODO JavaDoc
+public class UpdateWithTracker implements Serializable, Comparable<Object> {
     private final Update update;
     private final boolean sameTrackerIndex;
 
@@ -26,5 +28,17 @@ public class UpdateWithTracker implements Serializable, Comparable {
             return update.compareTo(up.update);
         }
         return 0;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof UpdateWithTracker)
+            return ((UpdateWithTracker) obj).getUpdate().equals(update) && ((UpdateWithTracker) obj).isSameTrackerIndex() == sameTrackerIndex;
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(update, sameTrackerIndex);
     }
 }

@@ -2,8 +2,10 @@ package it.polimi.ds.network;
 
 import java.io.Serializable;
 import java.util.Map;
+import java.util.Objects;
 
-public class Update implements Serializable, Comparable {
+// TODO JavaDoc
+public class Update implements Serializable, Comparable<Object> {
     private final Map<String, Integer> vectorClock;
     private final Address from;
     private final String key;
@@ -44,5 +46,18 @@ public class Update implements Serializable, Comparable {
             }
         }
         return 0;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Update)
+            return ((Update) obj).getVectorClock().equals(vectorClock) && ((Update) obj).getFrom().equals(from)
+                    && ((Update) obj).getKey().equals(key) && ((Update) obj).getValue().equals(value);
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(vectorClock, from, key, value);
     }
 }

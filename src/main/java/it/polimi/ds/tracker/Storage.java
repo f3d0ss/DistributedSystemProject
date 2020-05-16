@@ -9,6 +9,9 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * Contains all the data needed by the Tracker in order to work
+ */
 public class Storage extends ReentrantLock {
     private final Map<String, Integer> replicas;
     private final AtomicInteger trackerIndex = new AtomicInteger(0);
@@ -31,7 +34,10 @@ public class Storage extends ReentrantLock {
         return addresses;
     }
 
-    // return the address of the replica
+    /**
+     * Assigned the new client to the Replica serving the least amount of Clients
+     * @return the Address of the Replica that will be assigned to the Client
+     */
     protected Address addClient() {
         Map.Entry<String, Integer> min = null;
         for (Map.Entry<String, Integer> entry : replicas.entrySet()) {

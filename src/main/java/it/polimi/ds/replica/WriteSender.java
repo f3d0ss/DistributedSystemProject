@@ -7,6 +7,9 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Represent the Thread that will broadcast the Messages regarding the updates made by a Client on a Replica.
+ */
 public class WriteSender extends Thread {
     private static final Logger logger = Logger.getLogger("WriteSender");
     private final Address otherReplica;

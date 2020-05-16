@@ -2,6 +2,7 @@ package it.polimi.ds.replica;
 
 import it.polimi.ds.network.Address;
 
+// TODO JavaDoc
 public class TrackerUpdate {
     public static final String JOIN = "JOIN";
     public static final String EXIT = "EXIT";

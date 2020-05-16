@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+// TODO JavaDoc
 public class TrackerIndexHandler {
     private final Set<TrackerUpdate> updateFromTrackerQueue;
     private final Set<UpdateToBeSendQueueElements> updateToBeSendQueue;
@@ -24,6 +25,7 @@ public class TrackerIndexHandler {
         return trackerIndex;
     }
 
+    // TODO JavaDoc
     public synchronized void executeTrackerUpdate(TrackerUpdate trackerUpdate, StateHandler state, List<Address> activeReplicas) {
         if (trackerUpdate.getTrackerIndex() > this.trackerIndex + 1) {
             updateFromTrackerQueue.add(trackerUpdate);
@@ -56,7 +58,7 @@ public class TrackerIndexHandler {
         }
     }
 
-    /**
+    /** TODO JavaDoc
      * @param update
      * @param incomingTrackerIndex
      * @param state
@@ -71,13 +73,14 @@ public class TrackerIndexHandler {
 
     }
 
+    // TODO JavaDoc
     public synchronized ReplicaState checkTrackerIndexAndGetState(int incomingTrackerIndex, StateHandler stateHandler) {
         if (incomingTrackerIndex > trackerIndex)
             return null;
         return stateHandler.getState();
     }
 
-    /**
+    /** TODO JavaDoc
      * Methods called if `wait` is received
      *
      * @param update
@@ -109,6 +112,7 @@ public class TrackerIndexHandler {
         return updateToBeSendQueue.isEmpty();
     }
 
+    // TODO JavaDoc
     private class UpdateToBeSendQueueElements {
         private final Update update;
         private final List<Address> otherReplicasAlreadySent;

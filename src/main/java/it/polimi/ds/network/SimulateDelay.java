@@ -2,6 +2,9 @@ package it.polimi.ds.network;
 
 import java.util.Random;
 
+/**
+ * Used to simulate a delay of the network in order to perform testing under slow connections.
+ */
 public class SimulateDelay {
     private static final int FIXED_DELAY = 1000;
     private static final int MIN_DELAY = 1000;
