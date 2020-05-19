@@ -58,7 +58,9 @@ public class TrackerIndexHandler {
         }
     }
 
-    /** TODO JavaDoc
+    /**
+     * TODO JavaDoc
+     *
      * @param update
      * @param incomingTrackerIndex
      * @param state
@@ -80,7 +82,8 @@ public class TrackerIndexHandler {
         return stateHandler.getState();
     }
 
-    /** TODO JavaDoc
+    /**
+     * TODO JavaDoc
      * Methods called if `wait` is received
      *
      * @param update

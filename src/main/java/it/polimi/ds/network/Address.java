@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.Objects;
 
 /**
- * Represent the Address (IP and Port) needed for communication among entities.
+ * Represents the Address (IP and Port) needed for communication among entities.
  */
 public class Address implements Serializable {
     private final String ip;

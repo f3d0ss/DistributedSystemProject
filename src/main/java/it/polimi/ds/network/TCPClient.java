@@ -9,7 +9,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Represent a generic socket connection between two entities.
+ * Represents a generic socket connection between two entities.
  * Gives several methods to easily communicates through Objects.
  */
 public class TCPClient {

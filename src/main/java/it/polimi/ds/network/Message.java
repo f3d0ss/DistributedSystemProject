@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.List;
 
 /**
- * Represent a generic message that can be sent among different entities.
+ * Represents a generic message that can be sent among different entities.
  * It can be initialized in different ways depending on the type of the Message.
  */
 public class Message implements Serializable {

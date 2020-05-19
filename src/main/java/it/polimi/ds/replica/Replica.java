@@ -17,7 +17,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Represent one of the Replicas in the network.
+ * Represents one of the Replicas in the network.
  * It will serve multiple Clients and receive/send causal updates from/to the other Replicas in the network.
  */
 public class Replica {
@@ -202,6 +202,7 @@ public class Replica {
         otherReplicaAddresses = reply.getAddressSet();
         return new TrackerIndexHandler(reply.getTrackerIndex());
     }
+
     // TODO JavaDoc
     private StateHandler getState(TCPClient client, int trackerIndex) throws IOException, ClassNotFoundException {
         client.out().writeObject(new Message(MessageType.GET_STATE, trackerIndex));
@@ -213,7 +214,7 @@ public class Replica {
     }
 
     /**
-     * Represent the Thread that will handle the various requests from Client and other Replicas.
+     * Represents the Thread that will handle the various requests from Client and other Replicas.
      */
     private static class IncomingMessageHandler extends Thread {
         private final Socket clientSocket;
@@ -288,6 +289,7 @@ public class Replica {
 
         /**
          * Perform the read requested by the client.
+         *
          * @param resource the key of the resource the Client wants to read.
          * @return the Message containing the requested resource.
          */
@@ -297,8 +299,9 @@ public class Replica {
 
         /**
          * Perform the write requested by the client.
+         *
          * @param resource the key of the resource the Client wants to write.
-         * @param value the final value the client wants to assign the the resource.
+         * @param value    the final value the client wants to assign the the resource.
          */
         private void writeFromClient(String resource, String value) {
             Update update = state.clientWrite(resource, value);
@@ -320,7 +323,9 @@ public class Replica {
         }
 
 
-        /** TODO JavaDoc
+        /**
+         * TODO JavaDoc
+         *
          * @param update
          * @param incomingTrackerIndex
          * @return my trackerIndex if the incoming is less then mine, 0 otherwise

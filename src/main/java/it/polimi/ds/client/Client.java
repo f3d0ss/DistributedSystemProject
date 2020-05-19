@@ -9,7 +9,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Represent the Client application, it will allow the user to interact with the Tracker and a Replica.
+ * Represents the Client application, it will allow the user to interact with the Tracker and a Replica.
  */
 public class Client {
 

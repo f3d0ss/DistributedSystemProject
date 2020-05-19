@@ -35,7 +35,8 @@ public class Storage extends ReentrantLock {
     }
 
     /**
-     * Assigned the new client to the Replica serving the least amount of Clients
+     * Assigns the new client to the Replica serving the least amount of Clients
+     *
      * @return the Address of the Replica that will be assigned to the Client
      */
     protected Address addClient() {
