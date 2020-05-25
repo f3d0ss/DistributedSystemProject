@@ -5,10 +5,8 @@ import it.polimi.ds.network.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -34,14 +32,14 @@ public class Replica {
 
     public static void main(String[] args) {
         Replica replica = new Replica();
-        if (args.length >= 5)
-            replica.start(args[0], args[1], args[2], Integer.parseInt(args[3]), Integer.parseInt(args[4]));
-        else if (args.length >= 3)
-            replica.start(args[0], args[1], args[2]);
+        if (args.length >= 6)
+            replica.start(args[0], args[1], args[2], args[3], Integer.parseInt(args[4]), Integer.parseInt(args[5]));
+        else if (args.length >= 4)
+            replica.start(args[0], args[1], args[2], args[3]);
         else {
             logger.log(Level.SEVERE, "Too few arguments, replica was not launched.");
-            logger.log(Level.SEVERE, () -> "Please relaunch the replica with" +
-                    "<trackerIP> <trackerPort> <replicaPort> [<minDelay> <maxDelay>] as parameters.");
+            logger.log(Level.SEVERE, () -> "Please relaunch the replica with " +
+                    "<trackerIP> <trackerPort> <replicaIP> <replicaPort> [<minDelay> <maxDelay>] as parameters.");
         }
     }
 
@@ -84,19 +82,15 @@ public class Replica {
             Replica.maxDelay = maxDelay;
     }
 
-    public void start(String trackerIp, String trackerPort, String replicaPort, int minDelay, int maxDelay) {
+    public void start(String trackerIp, String trackerPort, String replicaIp, String replicaPort, int minDelay, int maxDelay) {
         Replica.setMaxDelay(maxDelay);
         Replica.setMinDelay(minDelay);
-        this.start(trackerIp, trackerPort, replicaPort);
+        this.start(trackerIp, trackerPort, replicaIp, replicaPort);
     }
 
-    public void start(String trackerIp, String trackerPort, String replicaPort) {
+    public void start(String trackerIp, String trackerPort, String replicaIp, String replicaPort) {
         Address trackerAddress = new Address(trackerIp, Integer.valueOf(trackerPort));
-        try {
-            this.replicaAddress = new Address(InetAddress.getLocalHost().getHostAddress(), Integer.valueOf(replicaPort));
-        } catch (UnknownHostException e) {
-            logger.log(Level.SEVERE, "Could not start replica.");
-        }
+        this.replicaAddress = new Address(replicaIp, Integer.valueOf(replicaPort));
         while (trackerIndexHandler == null) {
             try {
                 SimulateDelay.uniform(minDelay, maxDelay);

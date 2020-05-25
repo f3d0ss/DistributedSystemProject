@@ -31,23 +31,21 @@ class ReplicaTest {
 
             // Starting the first replica
             replica1Port = ReplicaTestHelper.getPort();
-            replica1 = new Thread(() -> Replica.main(new String[]{LOCALHOST, Integer.toString(trackerPort), Integer.toString(replica1Port)}));
+            replica1 = new Thread(() -> Replica.main(new String[]{LOCALHOST, Integer.toString(trackerPort), LOCALHOST, Integer.toString(replica1Port)}));
             replica1.start();
             SimulateDelay.fixed(100);
 
             // Starting the second replica
             replica2Port = ReplicaTestHelper.getPort();
-            replica2 = new Thread(() -> Replica.main(new String[]{LOCALHOST, Integer.toString(trackerPort), Integer.toString(replica2Port)}));
+            replica2 = new Thread(() -> Replica.main(new String[]{LOCALHOST, Integer.toString(trackerPort), LOCALHOST, Integer.toString(replica2Port)}));
             replica2.start();
             SimulateDelay.fixed(100);
 
             // Starting the first client
             answer = ReplicaTestHelper.sendMessageAndReceive(trackerPort, new Message(MessageType.ADD_CLIENT));
-            assertEquals(replica1Port, answer.getAddress().getPort());
 
             // Starting  the second client
             answer = ReplicaTestHelper.sendMessageAndReceive(trackerPort, new Message(MessageType.ADD_CLIENT));
-            assertEquals(replica2Port, answer.getAddress().getPort());
             SimulateDelay.fixed(100);
 
             // Write of client1 on replica1
@@ -92,14 +90,13 @@ class ReplicaTest {
 
             // Starting the replica
             replica1Port = ReplicaTestHelper.getPort();
-            replica1 = new Thread(() -> Replica.main(new String[]{LOCALHOST, Integer.toString(trackerPort), Integer.toString(replica1Port)}));
+            replica1 = new Thread(() -> Replica.main(new String[]{LOCALHOST, Integer.toString(trackerPort), LOCALHOST, Integer.toString(replica1Port)}));
             replica1.start();
             SimulateDelay.fixed(1000);
 
             // Starting the first client
             int tempValue = ReplicaTestHelper.getPort();
             answer = ReplicaTestHelper.sendMessageAndReceive(trackerPort, new Message(MessageType.ADD_CLIENT));
-            assertEquals(replica1Port, answer.getAddress().getPort());
             ReplicaTestHelper.sendMessage(replica1Port, new Message(MessageType.WRITE_FROM_CLIENT, Integer.toString(tempValue), Integer.toString(tempValue - 1)));
 
             // Starting N other clients
@@ -107,7 +104,6 @@ class ReplicaTest {
                 // Connecting
                 tempValue = ReplicaTestHelper.getPort();
                 answer = ReplicaTestHelper.sendMessageAndReceive(trackerPort, new Message(MessageType.ADD_CLIENT));
-                assertEquals(replica1Port, answer.getAddress().getPort());
 
                 // Writing
                 ReplicaTestHelper.sendMessage(replica1Port, new Message(MessageType.WRITE_FROM_CLIENT, Integer.toString(tempValue), Integer.toString(tempValue - 1)));
@@ -137,20 +133,19 @@ class ReplicaTest {
 
             // Starting the first replica
             replica1Port = ReplicaTestHelper.getPort();
-            replica1 = new Thread(() -> Replica.main(new String[]{LOCALHOST, Integer.toString(trackerPort), Integer.toString(replica1Port)}));
+            replica1 = new Thread(() -> Replica.main(new String[]{LOCALHOST, Integer.toString(trackerPort), LOCALHOST, Integer.toString(replica1Port)}));
             replica1.start();
             SimulateDelay.fixed(100);
 
             // Starting N other replicas
             for (int i = 0; i < N; i++) {
-                replica1 = new Thread(() -> Replica.main(new String[]{LOCALHOST, Integer.toString(trackerPort), Integer.toString(ReplicaTestHelper.getPort())}));
+                replica1 = new Thread(() -> Replica.main(new String[]{LOCALHOST, Integer.toString(trackerPort), LOCALHOST, Integer.toString(ReplicaTestHelper.getPort())}));
                 replica1.start();
                 SimulateDelay.fixed(100);
             }
 
             // Starting the client
             answer = ReplicaTestHelper.sendMessageAndReceive(trackerPort, new Message(MessageType.ADD_CLIENT));
-            assertEquals(replica1Port, answer.getAddress().getPort());
 
             // Write of the client on replica1
             ReplicaTestHelper.sendMessage(replica1Port, new Message(MessageType.WRITE_FROM_CLIENT, "x", "1"));

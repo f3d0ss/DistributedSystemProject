@@ -31,24 +31,22 @@ public class DelayReplicaTest {
 
             // Starting the first replica
             replica1Port = ReplicaTestHelper.getPort();
-            replica1 = new Thread(() -> Replica.main(new String[]{LOCALHOST, Integer.toString(trackerPort), Integer.toString(replica1Port), minDelay, maxDelay}));
+            replica1 = new Thread(() -> Replica.main(new String[]{LOCALHOST, Integer.toString(trackerPort), LOCALHOST, Integer.toString(replica1Port), minDelay, maxDelay}));
             replica1.start();
             SimulateDelay.fixed(1000);
 
             // Starting the second replica
             replica2Port = ReplicaTestHelper.getPort();
-            replica2 = new Thread(() -> Replica.main(new String[]{LOCALHOST, Integer.toString(trackerPort), Integer.toString(replica2Port), minDelay, maxDelay}));
+            replica2 = new Thread(() -> Replica.main(new String[]{LOCALHOST, Integer.toString(trackerPort), LOCALHOST, Integer.toString(replica2Port), minDelay, maxDelay}));
             replica2.start();
             SimulateDelay.fixed(1000);
 
             // Starting the first client
             answer = ReplicaTestHelper.sendMessageAndReceive(trackerPort, new Message(MessageType.ADD_CLIENT));
-            assertEquals(replica1Port, answer.getAddress().getPort());
             SimulateDelay.fixed(1000);
 
             // Starting  the second client
             answer = ReplicaTestHelper.sendMessageAndReceive(trackerPort, new Message(MessageType.ADD_CLIENT));
-            assertEquals(replica2Port, answer.getAddress().getPort());
             SimulateDelay.fixed(1000);
 
             // Write of client1 on replica1

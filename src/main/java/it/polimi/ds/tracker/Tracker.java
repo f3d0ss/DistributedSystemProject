@@ -29,7 +29,7 @@ public class Tracker {
             tracker.start(args[0]);
         else {
             logger.log(Level.SEVERE, "Too few arguments, tracker was not launched.");
-            logger.log(Level.SEVERE, () -> "Please relaunch the tracker with" +
+            logger.log(Level.SEVERE, () -> "Please relaunch the tracker with " +
                     "<trackerPort> [<minDelay> <maxDelay>] as parameters.");
         }
     }
@@ -126,6 +126,7 @@ public class Tracker {
                         }
                         SimulateDelay.uniform(minDelay, maxDelay);
                         replica.out().writeObject(new Message(MessageType.SEND_OTHER_REPLICAS, otherReplicas, newTrackerIndex));
+                        logger.log(Level.INFO, () -> "Successfully connected with Replica " + inputMessage.getAddress().toString() + ".");
                         break;
                     case ADD_CLIENT:
                         SimulateDelay.uniform(minDelay, maxDelay);
@@ -140,6 +141,7 @@ public class Tracker {
                         for (Address address : otherReplicas) {
                             new MessageSender(new Message(MessageType.REMOVE_OLD_REPLICA, inputMessage.getAddress(), newTrackerIndex), address).start();
                         }
+                        logger.log(Level.INFO, () -> "Successfully disconnected with Replica " + inputMessage.getAddress().toString() + ".");
                         break;
                     case REMOVE_CLIENT:
                         storage.removeClient(inputMessage.getAddress());

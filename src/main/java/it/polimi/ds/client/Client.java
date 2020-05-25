@@ -39,7 +39,7 @@ public class Client {
             client = new Client(args[0], args[1]);
         else {
             logger.log(Level.SEVERE, "Too few arguments, client was not launched.");
-            logger.log(Level.SEVERE, () -> "Please launch the client with" +
+            logger.log(Level.SEVERE, () -> "Please launch the client with " +
                     "<serverIP> <serverPort> [<minDelay> <maxDelay>] as parameters.");
             return;
         }
@@ -76,7 +76,7 @@ public class Client {
             try {
                 if (r.readLine().equals("exit")) setDone();
             } catch (IOException ex) {
-                logger.log(Level.WARNING, e.getMessage());
+                logger.log(Level.WARNING, ex.getMessage());
             }
             return;
         }
@@ -84,8 +84,9 @@ public class Client {
         try {
             Address replicaAddress = inputMessage.getAddress();
             if (replicaAddress == null) { //avoid nullpointer when no replicas are available
-                logger.log(Level.INFO, "There are no replicas available, press Enter to retry");
-                new BufferedReader(new InputStreamReader(System.in)).readLine();
+                logger.log(Level.INFO, "There are no replicas available: Enter exit to quit, Enter anything else to retry");
+                BufferedReader r = new BufferedReader(new InputStreamReader(System.in));
+                if (r.readLine().equals("exit")) setDone();
                 return;
             }
             TCPClient replicaSocket;
@@ -104,9 +105,10 @@ public class Client {
                         replicaSocket = TCPClient.connect(replicaAddress);
                         replicaSocket.out().writeObject(new Message(MessageType.READ_FROM_CLIENT, splittedString[1]));
                         inputMessage = (Message) replicaSocket.in().readObject();
-                        if (inputMessage.getResource() == null || inputMessage.getValue() == null)
-                            throw new IOException();
-                        System.out.println("Resource " + inputMessage.getResource() + " has value " + inputMessage.getValue() + ".");
+                        if (inputMessage.getValue() == null)
+                            System.out.println("Resource " + inputMessage.getResource() + " has no value in the database.");
+                        else
+                            System.out.println("Resource " + inputMessage.getResource() + " has value " + inputMessage.getValue() + ".");
                         replicaSocket.close();
                         break;
                     // Writing a value, inputString = write <resource> <value>
