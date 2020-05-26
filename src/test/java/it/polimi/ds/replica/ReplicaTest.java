@@ -50,6 +50,7 @@ class ReplicaTest {
 
             // Write of client1 on replica1
             ReplicaTestHelper.sendMessage(replica1Port, new Message(MessageType.WRITE_FROM_CLIENT, "x", "1"));
+            SimulateDelay.fixed(100);
 
             // Read of client1 on replica1
             answer = ReplicaTestHelper.sendMessageAndReceive(replica1Port, new Message(MessageType.READ_FROM_CLIENT, "x"));
@@ -58,7 +59,7 @@ class ReplicaTest {
 
             // Write of client2 on replica2
             ReplicaTestHelper.sendMessage(replica2Port, new Message(MessageType.WRITE_FROM_CLIENT, "y", "2"));
-            SimulateDelay.fixed(100);
+            SimulateDelay.fixed(500);
 
             // Read of client1 of resource written by client2 (y)
             answer = ReplicaTestHelper.sendMessageAndReceive(replica1Port, new Message(MessageType.READ_FROM_CLIENT, "y"));

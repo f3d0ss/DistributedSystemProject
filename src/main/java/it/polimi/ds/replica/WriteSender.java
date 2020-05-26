@@ -23,9 +23,6 @@ public class WriteSender extends Thread {
      * @param otherReplica            this is the
      * @param update                  this is the update to be sent
      * @param activeReplicas          this is used to check other replica is removed from the list of activeReplica
-     * @param outgoingTrackerIndex
-     * @param otherReplicasBeforeSend
-     * @param trackerIndexHandler
      */
     public WriteSender(Address otherReplica, Update update, List<Address> activeReplicas, int outgoingTrackerIndex, TrackerIndexHandler trackerIndexHandler, List<Address> otherReplicasBeforeSend) {
         this.otherReplica = otherReplica;

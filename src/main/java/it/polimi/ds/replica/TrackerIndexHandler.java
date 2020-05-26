@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
  * and enqueue the update to be send if a replica replied with wait
  */
 public class TrackerIndexHandler {
-    private static final Logger logger = Logger.getLogger("ReplicaState");
+    private static final Logger logger = Logger.getLogger("TrackerIndexHandler");
     private final Set<TrackerUpdate> updateFromTrackerQueue;
     private final Set<UpdateToBeSendQueueElements> updateToBeSendQueue;
     private int trackerIndex;
@@ -80,7 +80,7 @@ public class TrackerIndexHandler {
      * @return my trackerIndex if the incoming is less then mine, 0 otherwise
      */
     public synchronized int checkTrackerIndexAndExecuteUpdate(Update update, int incomingTrackerIndex, StateHandler state) {
-        logger.log(Level.INFO, "Update received from: \t" + update.getFrom() + "\t with tracker index = " + incomingTrackerIndex);
+        logger.log(Level.INFO, () -> "Update received from: \t" + update.getFrom() + "\t with tracker index = " + incomingTrackerIndex);
         state.replicaWrite(update, incomingTrackerIndex <= this.trackerIndex);
         if (incomingTrackerIndex < this.trackerIndex) {
             return this.trackerIndex;
@@ -90,7 +90,7 @@ public class TrackerIndexHandler {
     }
 
     /**
-     * Thos method return the state only if the incoming tracker index is less or equal to the tracker index this replica
+     * This method return the state only if the incoming tracker index is less or equal to the tracker index this replica
      */
     public synchronized ReplicaState checkTrackerIndexAndGetState(int incomingTrackerIndex, StateHandler stateHandler) {
         if (incomingTrackerIndex > trackerIndex)
@@ -106,7 +106,6 @@ public class TrackerIndexHandler {
      * @param incomingTrackerIndex    the tracker index of the wait reply
      * @param outgoingTrackerIndex    the tracker index of this replica when it tried to send the update
      * @param otherReplicasBeforeSend the list of replicas where it already sent the update
-     * @return true if you can resend the update
      */
     public synchronized void addToQueueOrRetryWrite(Update update, int outgoingTrackerIndex, int incomingTrackerIndex, List<Address> otherReplicasBeforeSend, List<Address> activeReplicas) {
         if (this.trackerIndex > outgoingTrackerIndex) {
@@ -134,7 +133,7 @@ public class TrackerIndexHandler {
     /**
      * This class represents an update that has to be sent after a tracker index update
      */
-    private class UpdateToBeSendQueueElements {
+    private static class UpdateToBeSendQueueElements {
         private final Update update;
         private final List<Address> otherReplicasAlreadySent;
         private final int incomingTrackerIndex;

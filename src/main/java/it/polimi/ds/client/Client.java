@@ -83,7 +83,7 @@ public class Client {
 
         try {
             Address replicaAddress = inputMessage.getAddress();
-            if (replicaAddress == null) { //avoid nullpointer when no replicas are available
+            if (replicaAddress == null) { // Avoid null pointer when no replicas are available
                 logger.log(Level.INFO, "There are no replicas available: Enter exit to quit, Enter anything else to retry");
                 BufferedReader r = new BufferedReader(new InputStreamReader(System.in));
                 if (r.readLine().equals("exit")) setDone();

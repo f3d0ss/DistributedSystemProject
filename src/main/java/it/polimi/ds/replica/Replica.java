@@ -108,7 +108,7 @@ public class Replica {
             }
         }
         logger.log(Level.INFO, "Connected to the tracker successfully.");
-//        Try to get the state from one of the replicas
+        // Try to get the state from one of the replicas
         if (otherReplicaAddresses.isEmpty())
             state = new StateHandler(new ReplicaState(replicaAddress), replicaAddress);
 
@@ -122,7 +122,7 @@ public class Replica {
             }
         }
 
-//        Here I have the state
+        // Here I have the state
         Thread replica = new Thread(() -> runReplica(replicaPort));
         replica.start();
         do {
@@ -298,10 +298,10 @@ public class Replica {
             // Get indexTracker (because not send to new replicas)
             int trackerIndex = trackerIndexHandler.getTrackerIndex();
             List<Address> otherReplicaBeforeSend = new ArrayList<>(otherReplicaAddresses);
-/*          here after reading the trackerIndex a thread could increment it and update the otherReplicaAddress,
-            we don't care, because if it was updated by an Exit from another replica it'ok if we don't send the update to the exited replica (would be check later otherwise)
-            if it was updated by a Join we will simply send the update to the new replica who will reply with `wait` causing the resend of the message, no biggy
- */
+            /* Here after reading the trackerIndex a thread could increment it and update the otherReplicaAddress,
+            we don't care, because if it was updated by an Exit from another replica it's ok if we don't send the update to the exited replica (would be check later otherwise)
+            if it was updated by a Join we will simply send the update to the new replica who will reply with `wait` causing the resend of the message, no problem
+            */
             Replica.addMessageToBeSent();
             for (Address address : otherReplicaAddresses) {
                 Replica.addMessageToBeSent();
@@ -315,8 +315,6 @@ public class Replica {
         /**
          * Execute checkTrackerIndexAndExecuteUpdate of TrackerIndexHandler
          *
-         * @param update
-         * @param incomingTrackerIndex
          * @return my trackerIndex if the incoming is less then mine, 0 otherwise
          */
         private int updateFromReplica(Update update, int incomingTrackerIndex) {

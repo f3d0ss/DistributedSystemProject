@@ -34,6 +34,8 @@ public class SimulateDelay {
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
+        else
+            SimulateDelay.fixed(from);
     }
 
     public static void uniform(int to) {
