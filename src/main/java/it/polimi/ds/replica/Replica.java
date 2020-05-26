@@ -229,7 +229,6 @@ public class Replica {
                 Message inputMessage = (Message) client.in().readObject();
                 switch (inputMessage.getType()) {
                     case READ_FROM_CLIENT:
-                        SimulateDelay.uniform(minDelay, maxDelay);
                         if (Replica.replicaIsNotClosing())
                             client.out().writeObject(readFromClient(inputMessage.getResource()));
                         else
@@ -238,10 +237,8 @@ public class Replica {
                     case WRITE_FROM_CLIENT:
                         if (Replica.replicaIsNotClosing()) {
                             writeFromClient(inputMessage.getResource(), inputMessage.getValue());
-                            SimulateDelay.uniform(minDelay, maxDelay);
                             client.out().writeObject(new Message(MessageType.ACK));
                         } else {
-                            SimulateDelay.uniform(minDelay, maxDelay);
                             client.out().writeObject(new Message(MessageType.WAIT));
                         }
                         break;
