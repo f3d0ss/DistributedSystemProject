@@ -188,7 +188,6 @@ public class Replica {
         }
     }
 
-    // TODO JavaDoc
     private TrackerIndexHandler joinNetwork(TCPClient client) throws IOException, ClassNotFoundException {
         client.out().writeObject(new Message(MessageType.ADD_REPLICA, replicaAddress));
         Message reply = (Message) client.in().readObject();
@@ -197,7 +196,6 @@ public class Replica {
         return new TrackerIndexHandler(reply.getTrackerIndex());
     }
 
-    // TODO JavaDoc
     private StateHandler getState(TCPClient client, int trackerIndex) throws IOException, ClassNotFoundException {
         client.out().writeObject(new Message(MessageType.GET_STATE, trackerIndex));
         Message reply = ((Message) client.in().readObject());
@@ -318,7 +316,7 @@ public class Replica {
 
 
         /**
-         * TODO JavaDoc
+         * Execute checkTrackerIndexAndExecuteUpdate of TrackerIndexHandler
          *
          * @param update
          * @param incomingTrackerIndex
@@ -335,7 +333,6 @@ public class Replica {
             return trackerIndexHandler.checkTrackerIndexAndExecuteUpdate(update, incomingTrackerIndex, state);
         }
 
-        // TODO JavaDoc
         private ReplicaState getReplicaState(int incomingTrackerIndex, StateHandler state) {
             /*  Check the incoming trackerIndex ITI, if:
                 ITI > my trackerIndex MTI reply with `NOT_STATE`
@@ -347,7 +344,6 @@ public class Replica {
 
         }
 
-        // TODO JavaDoc
         private void addNewReplica(Address address, int trackerIndex, StateHandler state, List<Address> activeReplicas) {
             //Use trackerIndexHandler.executeTrackerUpdate
             /*  Check the incoming trackerIndex ITI, if:
@@ -358,7 +354,6 @@ public class Replica {
             trackerIndexHandler.executeTrackerUpdate(new TrackerUpdate(TrackerUpdate.JOIN, address, trackerIndex), state, activeReplicas);
         }
 
-        // TODO JavaDoc
         private void removeOldReplica(Address address, int trackerIndex, StateHandler state, List<Address> activeReplicas) {
             //Use trackerIndexHandler.executeTrackerUpdate
             /*  Check the incoming trackerIndex ITI, if:

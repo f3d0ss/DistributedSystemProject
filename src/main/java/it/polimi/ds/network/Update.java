@@ -4,7 +4,9 @@ import java.io.Serializable;
 import java.util.Map;
 import java.util.Objects;
 
-// TODO JavaDoc
+/**
+ * Represents the update exchanged between replicas
+ */
 public class Update implements Serializable, Comparable<Object> {
     private final Map<String, Integer> vectorClock;
     private final Address from;

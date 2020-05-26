@@ -2,7 +2,9 @@ package it.polimi.ds.replica;
 
 import it.polimi.ds.network.Address;
 
-// TODO JavaDoc
+/**
+ * This class represent the update sent by the tracker to the replicas
+ */
 public class TrackerUpdate {
     public static final String JOIN = "JOIN";
     public static final String EXIT = "EXIT";

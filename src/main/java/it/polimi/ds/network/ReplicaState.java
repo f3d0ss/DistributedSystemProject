@@ -6,7 +6,9 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Queue;
 
-// TODO JavaDoc
+/**
+ * Represents the sate of the Replica with the data store, the actual vector clock and the queue of the update waiting for an update of the vector clock
+ */
 public class ReplicaState implements Serializable {
     private final Map<String, String> store;
     private final Queue<UpdateWithTracker> queue;

@@ -3,7 +3,10 @@ package it.polimi.ds.network;
 import java.io.Serializable;
 import java.util.Objects;
 
-// TODO JavaDoc
+/**
+ * This is a wrapper for the update
+ * It's used to add the sameTrackerIndex attribute before add the update into the queue of update
+ */
 public class UpdateWithTracker implements Serializable, Comparable<Object> {
     private final Update update;
     private final boolean sameTrackerIndex;

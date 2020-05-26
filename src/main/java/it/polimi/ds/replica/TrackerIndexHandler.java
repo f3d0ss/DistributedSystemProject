@@ -9,7 +9,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-// TODO JavaDoc
+/**
+ * This class handle the TrackerIndex with the needed synchronization
+ * It also enqueue the update from the tracker if they come out of order
+ * and enqueue the update to be send if a replica replied with wait
+ */
 public class TrackerIndexHandler {
     private final Set<TrackerUpdate> updateFromTrackerQueue;
     private final Set<UpdateToBeSendQueueElements> updateToBeSendQueue;
@@ -25,7 +29,13 @@ public class TrackerIndexHandler {
         return trackerIndex;
     }
 
-    // TODO JavaDoc
+    /**
+     * This method execute the update from the tracker or put it in queue if out of order
+     *
+     * @param trackerUpdate  update from tracker
+     * @param state          the state of the replica to be update in case some update from other replica become executable
+     * @param activeReplicas the list of other replica to be update
+     */
     public synchronized void executeTrackerUpdate(TrackerUpdate trackerUpdate, StateHandler state, List<Address> activeReplicas) {
         if (trackerUpdate.getTrackerIndex() > this.trackerIndex + 1) {
             updateFromTrackerQueue.add(trackerUpdate);
@@ -59,11 +69,11 @@ public class TrackerIndexHandler {
     }
 
     /**
-     * TODO JavaDoc
+     * This method execute the update on the state
      *
-     * @param update
-     * @param incomingTrackerIndex
-     * @param state
+     * @param update               the update
+     * @param incomingTrackerIndex the tracker index of the incoming update
+     * @param state                the state of the replica to be update
      * @return my trackerIndex if the incoming is less then mine, 0 otherwise
      */
     public synchronized int checkTrackerIndexAndExecuteUpdate(Update update, int incomingTrackerIndex, StateHandler state) {
@@ -75,7 +85,9 @@ public class TrackerIndexHandler {
 
     }
 
-    // TODO JavaDoc
+    /**
+     * Thos method return the state only if the incoming tracker index is less or equal to the tracker index this replica
+     */
     public synchronized ReplicaState checkTrackerIndexAndGetState(int incomingTrackerIndex, StateHandler stateHandler) {
         if (incomingTrackerIndex > trackerIndex)
             return null;
@@ -83,13 +95,13 @@ public class TrackerIndexHandler {
     }
 
     /**
-     * TODO JavaDoc
      * Methods called if `wait` is received
+     * add the update waiting for un update of the tracker index or retry to send the update if the tracker is already changed
      *
-     * @param update
-     * @param incomingTrackerIndex
-     * @param outgoingTrackerIndex
-     * @param otherReplicasBeforeSend
+     * @param update                  the update that has to be sent
+     * @param incomingTrackerIndex    the tracker index of the wait reply
+     * @param outgoingTrackerIndex    the tracker index of this replica when it tried to send the update
+     * @param otherReplicasBeforeSend the list of replicas where it already sent the update
      * @return true if you can resend the update
      */
     public synchronized void addToQueueOrRetryWrite(Update update, int outgoingTrackerIndex, int incomingTrackerIndex, List<Address> otherReplicasBeforeSend, List<Address> activeReplicas) {
@@ -115,7 +127,9 @@ public class TrackerIndexHandler {
         return updateToBeSendQueue.isEmpty();
     }
 
-    // TODO JavaDoc
+    /**
+     * This class represents an update that has to be sent after a tracker index update
+     */
     private class UpdateToBeSendQueueElements {
         private final Update update;
         private final List<Address> otherReplicasAlreadySent;

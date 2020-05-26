@@ -7,8 +7,9 @@ import it.polimi.ds.network.UpdateWithTracker;
 
 import java.util.Map;
 
-// TODO JavaDoc
-// This class exist to synchronize the access to the State
+/**
+ * This class exist to synchronize the access to the State
+ */
 public class StateHandler {
     public static final int DISCARD = -1;
     public static final int ADD_TO_QUEUE = 0;
@@ -21,7 +22,11 @@ public class StateHandler {
         this.replicaAddress = replicaAddress;
     }
 
-    // TODO JavaDoc
+    /**
+     * This method is the usual vector clock check taking into account if one of the vector clock know more than the other
+     *
+     * @return DISCARD if we are more up to date, ADD_TO_QUEUE if we need some update before applying this one, ACCEPT if we can apply the update
+     */
     private static int vectorCheck(Map<String, Integer> myVector, Map<String, Integer> newVector, Address from, boolean iKnowMore) {
         for (Map.Entry<String, Integer> entry : newVector.entrySet()) {
             String key = entry.getKey();
