@@ -7,6 +7,8 @@ import it.polimi.ds.network.Update;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
@@ -15,6 +17,7 @@ import java.util.stream.Collectors;
  * and enqueue the update to be send if a replica replied with wait
  */
 public class TrackerIndexHandler {
+    private static final Logger logger = Logger.getLogger("ReplicaState");
     private final Set<TrackerUpdate> updateFromTrackerQueue;
     private final Set<UpdateToBeSendQueueElements> updateToBeSendQueue;
     private int trackerIndex;
@@ -77,6 +80,7 @@ public class TrackerIndexHandler {
      * @return my trackerIndex if the incoming is less then mine, 0 otherwise
      */
     public synchronized int checkTrackerIndexAndExecuteUpdate(Update update, int incomingTrackerIndex, StateHandler state) {
+        logger.log(Level.INFO, "Update received from: \t" + update.getFrom() + "\t with tracker index = " + incomingTrackerIndex);
         state.replicaWrite(update, incomingTrackerIndex <= this.trackerIndex);
         if (incomingTrackerIndex < this.trackerIndex) {
             return this.trackerIndex;
