@@ -9,19 +9,19 @@ import java.util.Objects;
  */
 public class UpdateWithTracker implements Serializable, Comparable<Object> {
     private final Update update;
-    private final boolean sameTrackerIndex;
+    private final int incomingTrackerIndex;
 
-    public UpdateWithTracker(Update update, boolean sameTrackerIndex) {
+    public UpdateWithTracker(Update update, int incomingTrackerIndex) {
         this.update = update;
-        this.sameTrackerIndex = sameTrackerIndex;
+        this.incomingTrackerIndex = incomingTrackerIndex;
     }
 
     public Update getUpdate() {
         return update;
     }
 
-    public boolean isSameTrackerIndex() {
-        return sameTrackerIndex;
+    public int getIncomingTrackerIndex() {
+        return incomingTrackerIndex;
     }
 
     @Override
@@ -36,12 +36,12 @@ public class UpdateWithTracker implements Serializable, Comparable<Object> {
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof UpdateWithTracker)
-            return ((UpdateWithTracker) obj).getUpdate().equals(update) && ((UpdateWithTracker) obj).isSameTrackerIndex() == sameTrackerIndex;
+            return ((UpdateWithTracker) obj).getUpdate().equals(update) && ((UpdateWithTracker) obj).getIncomingTrackerIndex() == incomingTrackerIndex;
         return false;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(update, sameTrackerIndex);
+        return Objects.hash(update, incomingTrackerIndex);
     }
 }
