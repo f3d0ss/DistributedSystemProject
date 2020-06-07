@@ -23,7 +23,7 @@ The users of the system, they connect to a Replicas through the Tracker and can 
 ## Abstract
 
 We had to implement causal consistency, so the easy choice was to implement a vector clock, but vector clock is not usually implemented for dynamic system like this, where replicas join and leave over time.<br>
-An easy solution would have been to add indexes to the vector clock as replicas join the network and leave them in even if they leave, but one of the requirements was to use `limited (coordination) overhead`. 
+An easy solution would have been to add indexes to the vector clock as replicas join the network, and keep these indexes even when the replicas leave, but one of the requirements was to use `limited (coordination) overhead`. 
 Also consider the case where a new Replica C joins the network and obtains the state from Replica B and, meanwhile, Replica A, who doesn't know yet about C, sends an update to B. Normally in this case C would be cut off from any new update from B and A because it would wait the update from B before apply subsequent updates.<br>
 So we came up with a "fix" to the protocol adding a TrackerIndex.<br>
 The Tracker keeps track of all the Replicas in the network. When a Replica joins or leaves the network it sends to every other Replica in the network an update with the current TrackerIndex which is incremented for each update sent.
