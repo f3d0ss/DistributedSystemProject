@@ -80,8 +80,8 @@ public class TrackerIndexHandler {
      * @return my trackerIndex if the incoming is less then mine, 0 otherwise
      */
     public synchronized int checkTrackerIndexAndExecuteUpdate(Update update, int incomingTrackerIndex, StateHandler state) {
-        logger.log(Level.INFO, "Update received from: \t" + update.getFrom() + "\t with tracker index = " + incomingTrackerIndex);
-        state.replicaWrite(update, incomingTrackerIndex , this.trackerIndex);
+        logger.log(Level.INFO, () -> "Update received from: \t" + update.getFrom() + "\t with tracker index = " + incomingTrackerIndex);
+        state.replicaWrite(update, incomingTrackerIndex, this.trackerIndex);
         if (incomingTrackerIndex < this.trackerIndex) {
             return this.trackerIndex;
         }

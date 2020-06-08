@@ -79,10 +79,10 @@ public class StateHandler {
         return new Update(newVector, replicaAddress, key, value);
     }
 
-    public synchronized void replicaWrite(Update update, int incomingTrackerIndex , int myTrackerIndex) {
-        logger.log(Level.INFO, "Update: \t" + update.getKey() + " = " + update.getValue());
-        logger.log(Level.INFO, "Update with vector clock: \n" + vectorClockToString(update.getVectorClock()));
-        logger.log(Level.INFO, "My vector clock: \n" + vectorClockToString(state.getVectorClock()));
+    public synchronized void replicaWrite(Update update, int incomingTrackerIndex, int myTrackerIndex) {
+        logger.log(Level.INFO, () -> "Update: \t" + update.getKey() + " = " + update.getValue());
+        logger.log(Level.INFO, () -> "Update with vector clock: \n" + vectorClockToString(update.getVectorClock()));
+        logger.log(Level.INFO, () -> "My vector clock: \n" + vectorClockToString(state.getVectorClock()));
         Map<String, Integer> myVector = state.getVectorClock();
         int check = vectorCheck(myVector, update.getVectorClock(), update.getFrom(), incomingTrackerIndex <= myTrackerIndex);
         if (check == ACCEPT) {
@@ -109,7 +109,7 @@ public class StateHandler {
                 state.getQueue().remove(updateWithTracker);
                 myVector.put(update.getFrom().toString(), myVector.get(update.getFrom().toString()) + 1); // myVector[from] ++
                 state.write(myVector, update.getKey(), update.getValue());
-                logger.log(Level.INFO, "Update ACCEPTED, new vector clock: \n" + vectorClockToString(state.getVectorClock()));
+                logger.log(Level.INFO, () -> "Update ACCEPTED, new vector clock: \n" + vectorClockToString(state.getVectorClock()));
                 checkUpdateQueue(myTrackerIndex);
                 break;
             }
