@@ -126,7 +126,17 @@ public class TrackerIndexHandler {
                 return;
             }
         }
+        for (UpdateToBeSendQueueElements updateToBeSendQueueElement : updateToBeSendQueue) {
+            if(updateToBeSendQueueElement.getUpdate().equals(update)) {
+                int biggestTrackerIndex = incomingTrackerIndex < updateToBeSendQueueElement.getIncomingTrackerIndex() ? updateToBeSendQueueElement.getIncomingTrackerIndex() : incomingTrackerIndex;
+                otherReplicasBeforeSend.addAll(updateToBeSendQueueElement.getOtherReplicasAlreadySent());
+                updateToBeSendQueue.remove(updateToBeSendQueueElement);
+                updateToBeSendQueue.add(new UpdateToBeSendQueueElements(update, otherReplicasBeforeSend, biggestTrackerIndex));
+                return;
+            }
+        }
         updateToBeSendQueue.add(new UpdateToBeSendQueueElements(update, otherReplicasBeforeSend, incomingTrackerIndex));
+
     }
 
     public boolean isOutgoingQueueEmpty() {
