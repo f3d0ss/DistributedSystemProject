@@ -4,6 +4,7 @@ import it.polimi.ds.network.Address;
 import it.polimi.ds.network.ReplicaState;
 import it.polimi.ds.network.Update;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -52,11 +53,13 @@ public class TrackerIndexHandler {
             }
             trackerIndex++;
             for (UpdateToBeSendQueueElements updateToBeSendQueueElement : updateToBeSendQueue) {
-                List<Address> newReplicas = activeReplicas.stream().filter(address -> !updateToBeSendQueueElement.getOtherReplicasAlreadySent().contains(address)).collect(Collectors.toList());
+                List<Address> newReplicas = activeReplicas.stream()
+                        .filter(address -> !updateToBeSendQueueElement.getOtherReplicasAlreadySent().contains(address))
+                        .collect(Collectors.toList());
                 updateToBeSendQueueElement.getOtherReplicasAlreadySent().addAll(newReplicas);
                 for (Address address : newReplicas) {
                     Replica.addMessageToBeSent();
-                    Thread writeSender = new WriteSender(address, updateToBeSendQueueElement.getUpdate(), activeReplicas, this.trackerIndex, this, updateToBeSendQueueElement.getOtherReplicasAlreadySent());
+                    Thread writeSender = new WriteSender(address, updateToBeSendQueueElement.getUpdate(), activeReplicas, this.trackerIndex, this, new ArrayList<>(activeReplicas));
                     writeSender.start();
                 }
 
@@ -115,7 +118,7 @@ public class TrackerIndexHandler {
             otherReplicasBeforeSend.addAll(newReplicas);
             for (Address address : newReplicas) {
                 Replica.addMessageToBeSent();
-                Thread writeSender = new WriteSender(address, update, activeReplicas, outgoingTrackerIndex + 1, this, otherReplicasBeforeSend);
+                Thread writeSender = new WriteSender(address, update, activeReplicas, outgoingTrackerIndex + 1, this, new ArrayList<>(activeReplicas));
                 writeSender.start();
             }
 
